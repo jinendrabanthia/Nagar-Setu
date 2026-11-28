@@ -48,13 +48,56 @@ export function formatCoordinates(latitude?: number | null, longitude?: number |
   return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 }
 
-const TONE_NEUTRAL = "bg-slate-500/15 text-slate-600 ring-slate-500/30";
-const TONE_INFO = "bg-sky-500/15 text-sky-700 ring-sky-500/30";
-const TONE_SUCCESS = "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30";
-const TONE_WARN = "bg-amber-500/15 text-amber-700 ring-amber-500/30";
-const TONE_DANGER = "bg-rose-500/15 text-rose-700 ring-rose-500/30";
+export interface SemanticTone {
+  text: string;
+  bg: string;
+  border: string;
+  dot: string;
+}
 
-const STATUS_TONES: Record<string, string> = {
+const TONE_NEUTRAL: SemanticTone = {
+  text: "var(--status-neutral)",
+  bg: "var(--status-neutral-bg)",
+  border: "var(--status-neutral-border)",
+  dot: "var(--status-neutral)",
+};
+
+const TONE_INFO: SemanticTone = {
+  text: "var(--status-info)",
+  bg: "var(--status-info-bg)",
+  border: "var(--status-info-border)",
+  dot: "var(--status-info)",
+};
+
+const TONE_SUCCESS: SemanticTone = {
+  text: "var(--status-success)",
+  bg: "var(--status-success-bg)",
+  border: "var(--status-success-border)",
+  dot: "var(--status-success)",
+};
+
+const TONE_WARN: SemanticTone = {
+  text: "var(--status-warn)",
+  bg: "var(--status-warn-bg)",
+  border: "var(--status-warn-border)",
+  dot: "var(--status-warn)",
+};
+
+const TONE_DANGER: SemanticTone = {
+  text: "var(--status-danger)",
+  bg: "var(--status-danger-bg)",
+  border: "var(--status-danger-border)",
+  dot: "var(--status-danger)",
+};
+
+const TONE_HOTSPOT: SemanticTone = {
+  text: "var(--status-hotspot)",
+  bg: "var(--status-hotspot-bg)",
+  border: "var(--status-hotspot-border)",
+  dot: "var(--status-hotspot)",
+};
+
+const STATUS_STYLE_MAP: Record<string, SemanticTone> = {
   pending: TONE_WARN,
   queued: TONE_INFO,
   running: TONE_INFO,
@@ -68,10 +111,14 @@ const STATUS_TONES: Record<string, string> = {
   active: TONE_SUCCESS,
   online: TONE_SUCCESS,
   matched_records: TONE_SUCCESS,
+  good: TONE_SUCCESS,
   rejected_false_positive: TONE_DANGER,
   rejected: TONE_DANGER,
   failed: TONE_DANGER,
   validation_failed: TONE_DANGER,
+  critical: TONE_DANGER,
+  poor: TONE_DANGER,
+  high: TONE_DANGER,
   needs_more_information: TONE_WARN,
   needs_more_evidence: TONE_WARN,
   ambiguous_match: TONE_WARN,
@@ -79,10 +126,14 @@ const STATUS_TONES: Record<string, string> = {
   missing_contract_data: TONE_WARN,
   completed_pending_verification: TONE_WARN,
   simulated: TONE_WARN,
+  medium: TONE_WARN,
+  fair: TONE_WARN,
   in_progress: TONE_INFO,
   assigned: TONE_INFO,
-  under_review: TONE_INFO,
+  under_review: TONE_HOTSPOT,
+  hotspot: TONE_HOTSPOT,
   reopened: TONE_WARN,
+  low: TONE_NEUTRAL,
   cancelled: TONE_NEUTRAL,
   draft: TONE_NEUTRAL,
   no_asset_match: TONE_NEUTRAL,
@@ -91,7 +142,13 @@ const STATUS_TONES: Record<string, string> = {
   closed: TONE_NEUTRAL,
 };
 
-export function statusTone(status: string | null | undefined): string {
+export function statusSemanticStyle(status: string | null | undefined): SemanticTone {
   if (!status) return TONE_NEUTRAL;
-  return STATUS_TONES[status] ?? TONE_NEUTRAL;
+  return STATUS_STYLE_MAP[status] ?? TONE_NEUTRAL;
+}
+
+/** Backwards-compatible string helper if any external code calls statusTone. */
+export function statusTone(status: string | null | undefined): string {
+  const s = statusSemanticStyle(status);
+  return `bg-[${s.bg}] text-[${s.text}]`;
 }

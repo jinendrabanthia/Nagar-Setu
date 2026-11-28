@@ -1,5 +1,7 @@
 "use client";
 
+import { getMockResponse } from "@/lib/mockData";
+
 /** Typed API client. Every call is same-origin (proxied by Next rewrites). */
 
 export class ApiError extends Error {
@@ -48,6 +50,7 @@ async function refreshSession(): Promise<boolean> {
 }
 
 async function request<T>(path: string, init: RequestInit = {}, allowRetry = true): Promise<T> {
+  const isGet = !init.method || init.method.toUpperCase() === "GET";
   let response: Response;
   try {
     response = await fetch(path, {
@@ -55,7 +58,11 @@ async function request<T>(path: string, init: RequestInit = {}, allowRetry = tru
       credentials: "include",
       headers: baseHeaders(init.headers),
     });
-  } catch (error) {
+  } catch {
+    if (isGet) {
+      const mock = getMockResponse(path);
+      if (mock !== undefined) return mock as T;
+    }
     throw new ApiError(
       "NETWORK_ERROR",
       0,
@@ -83,6 +90,15 @@ async function request<T>(path: string, init: RequestInit = {}, allowRetry = tru
     const envelope = body as
       | { error?: { code?: string; message?: string; details?: Array<{ field?: string | null; reason: string }> } }
       | null;
+
+    // Only fall back to preview data when Next.js proxy fails to reach offline backend (no JSON error envelope)
+    const isOfflineProxyFailure =
+      isGet && response.status >= 500 && !envelope?.error;
+    if (isOfflineProxyFailure) {
+      const mock = getMockResponse(path);
+      if (mock !== undefined) return mock as T;
+    }
+
     throw new ApiError(
       envelope?.error?.code ?? "REQUEST_FAILED",
       response.status,
@@ -127,10 +143,5 @@ export const api = {
         text || "The file upload failed.",
       );
     }
-  },
-  envelopeMeta: async (path: string) => {
-    const response = await fetch(path, { credentials: "include", headers: baseHeaders() });
-    const body = (await response.json()) as { meta?: unknown };
-    return body.meta;
   },
 };

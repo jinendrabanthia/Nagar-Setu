@@ -49,20 +49,38 @@ export default function AdminOverviewPage() {
         tone="admin"
       />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard tone="admin" label="Departments" value={departments.data?.length ?? "—"} hint="Registry entries" />
-        <MetricCard tone="admin" label="Assets" value={assets.data?.length ?? "—"} hint={`${(assets.data ?? []).filter((asset) => !asset.department_id).length} without an owning department`} />
-        <MetricCard tone="admin" label="Contracts" value={contracts.data?.length ?? "—"} hint={`${contractors.data?.length ?? 0} contractors`} />
-        <MetricCard tone="admin" label="Open work orders" value={openWorkOrders} hint={`${awaitingVerification} awaiting verification`} emphasis={awaitingVerification ? "warn" : "default"} />
+        <MetricCard
+          tone="admin"
+          label="Assets"
+          value={assets.data?.length ?? "—"}
+          hint={`${(assets.data ?? []).filter((asset) => !asset.department_id).length} without an owning department`}
+          emphasis="info"
+        />
+        <MetricCard
+          tone="admin"
+          label="Contracts"
+          value={contracts.data?.length ?? "—"}
+          hint={`${contractors.data?.length ?? 0} contractors`}
+          emphasis="hotspot"
+        />
+        <MetricCard
+          tone="admin"
+          label="Open work orders"
+          value={openWorkOrders}
+          hint={`${awaitingVerification} awaiting verification`}
+          emphasis={awaitingVerification ? "warn" : "success"}
+        />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3">
         <Card tone="admin" className="lg:col-span-2">
           <CardHeader
             title="Corrective action pipeline"
             tone="admin"
             actions={
-              <Link href="/admin/work-orders" className="text-xs text-blue-700 hover:underline">
+              <Link href="/admin/work-orders" className="text-xs font-medium text-[var(--accent-primary)] hover:underline">
                 All work orders →
               </Link>
             }
@@ -77,16 +95,16 @@ export default function AdminOverviewPage() {
             >
               {(workOrders.data ?? []).slice(0, 8).map((order) => (
                 <Row key={order.id} tone="admin">
-                  <td className="px-4 py-2 font-mono text-xs text-slate-700">{order.work_order_number}</td>
-                  <td className="px-4 py-2 text-slate-700">{order.department_name ?? "—"}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{order.work_order_number}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{order.department_name ?? "—"}</td>
+                  <td className="px-4 py-3">
                     <StatusBadge status={order.status} />
                   </td>
-                  <td className="px-4 py-2 text-xs text-slate-500">{humanise(order.priority)}</td>
-                  <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(order.due_date)}</td>
-                  <td className="px-4 py-2 text-right">
-                    <Link href={`/admin/work-orders/${order.id}`} className="text-xs text-blue-700 hover:underline">
-                      Open
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(order.priority)}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(order.due_date)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Link href={`/admin/work-orders/${order.id}`} className="text-xs font-medium text-[var(--accent-primary)] hover:underline">
+                      Open →
                     </Link>
                   </td>
                 </Row>
@@ -97,47 +115,47 @@ export default function AdminOverviewPage() {
 
         <Card tone="admin">
           <CardHeader title="Data quality" description="Registry gaps affect investigation quality." tone="admin" />
-          <ul className="space-y-2 px-4 py-3 text-sm text-slate-700">
-            <li className="flex justify-between gap-3">
+          <ul className="divide-y divide-[var(--border-subtle)] px-5 py-2 text-sm text-[var(--text-secondary)]">
+            <li className="flex justify-between gap-3 py-2.5">
               <span>Assets without coordinates</span>
-              <span className="tabular-nums font-medium">
+              <span className="tabular-nums font-semibold text-[var(--text-primary)]">
                 {(assets.data ?? []).filter((asset) => !asset.location).length}
               </span>
             </li>
-            <li className="flex justify-between gap-3">
+            <li className="flex justify-between gap-3 py-2.5">
               <span>Assets without a department</span>
-              <span className="tabular-nums font-medium">
+              <span className="tabular-nums font-semibold text-[var(--text-primary)]">
                 {(assets.data ?? []).filter((asset) => !asset.department_id).length}
               </span>
             </li>
-            <li className="flex justify-between gap-3">
+            <li className="flex justify-between gap-3 py-2.5">
               <span>Contracts with no assets linked</span>
-              <span className="tabular-nums font-medium">
+              <span className="tabular-nums font-semibold text-[var(--text-primary)]">
                 {(contracts.data ?? []).filter((contract) => contract.asset_ids.length === 0).length}
               </span>
             </li>
-            <li className="flex justify-between gap-3">
+            <li className="flex justify-between gap-3 py-2.5">
               <span>Investigations open</span>
-              <span className="tabular-nums font-medium">
+              <span className="tabular-nums font-semibold text-[var(--text-primary)]">
                 {(investigations.data ?? []).filter((item) => item.status !== "closed").length}
               </span>
             </li>
-            <li className="flex justify-between gap-3">
+            <li className="flex justify-between gap-3 py-2.5">
               <span>Candidate events pending review</span>
-              <span className="tabular-nums font-medium">{analytics.data?.pending_candidates ?? 0}</span>
+              <span className="tabular-nums font-semibold text-[var(--text-primary)]">{analytics.data?.pending_candidates ?? 0}</span>
             </li>
           </ul>
         </Card>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-5">
         <Card tone="admin">
           <CardHeader
             title="Recent administrative actions"
             description="Consequential actions are audited and cannot be edited."
             tone="admin"
             actions={
-              <Link href="/admin/audit-logs" className="text-xs text-blue-700 hover:underline">
+              <Link href="/admin/audit-logs" className="text-xs font-medium text-[var(--accent-primary)] hover:underline">
                 Full audit trail →
               </Link>
             }
@@ -148,13 +166,13 @@ export default function AdminOverviewPage() {
             <DataTable tone="admin" head={["Action", "Entity", "Actor", "When"]} empty="No audit entries yet.">
               {(audit.data ?? []).map((entry) => (
                 <Row key={entry.id} tone="admin">
-                  <td className="px-4 py-2 font-mono text-xs text-slate-700">{entry.action}</td>
-                  <td className="px-4 py-2 text-xs text-slate-500">
+                  <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{entry.action}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                     {entry.entity_type}
                     {entry.entity_id ? ` · ${entry.entity_id.slice(0, 8)}` : ""}
                   </td>
-                  <td className="px-4 py-2 text-xs text-slate-500">{entry.actor_label ?? "system"}</td>
-                  <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(entry.created_at)}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{entry.actor_label ?? "system"}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(entry.created_at)}</td>
                 </Row>
               ))}
             </DataTable>

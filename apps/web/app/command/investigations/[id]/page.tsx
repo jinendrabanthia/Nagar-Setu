@@ -8,6 +8,7 @@ import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import { EvidenceGrid } from "@/components/EvidenceGrid";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -19,6 +20,7 @@ import {
   PageHeader,
   PermissionNotice,
   Row,
+  Select,
   StatusBadge,
   TagList,
   Textarea,
@@ -150,7 +152,7 @@ export default function InvestigationDetailPage() {
         actions={
           <>
             <StatusBadge status={investigation.status} />
-            {has("investigation:analyze") ? (
+            {has("investigation:analyze") || has("investigation:manage") ? (
               <Button tone="command" variant="secondary" onClick={() => void runAnalysis()} disabled={busy}>
                 {busy ? "Working…" : "Draft analysis"}
               </Button>
@@ -159,26 +161,18 @@ export default function InvestigationDetailPage() {
         }
       />
 
-      {notice ? (
-        <p className="mb-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-200">
-          {notice}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {notice ? <AlertBanner kind="info">{notice}</AlertBanner> : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
           <Card tone="command">
             <CardHeader
               title="Infrastructure record match"
               description="Nearest registered asset within the match radius. Records only — not a liability conclusion."
               tone="command"
             />
-            <div className="px-4 py-4">
+            <div className="px-5 py-4">
               {responsibility ? (
                 <>
                   <KeyValue
@@ -197,48 +191,55 @@ export default function InvestigationDetailPage() {
                     ]}
                   />
                   <div className="mt-4">
-                    <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Contracts</p>
+                    <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Contracts</p>
                     {responsibility.contracts.length ? (
-                      <ul className="space-y-2 text-sm text-slate-300">
+                      <ul className="space-y-2 text-sm">
                         {responsibility.contracts.map((contract) => (
-                          <li key={contract.contract_id} className="rounded-lg border border-[#1e2b3c] bg-[#0b1320] px-3 py-2">
-                            <p className="font-medium text-slate-100">
+                          <li key={contract.contract_id} className="surface-data rounded-[10px] px-3.5 py-2.5">
+                            <p className="font-medium text-[var(--text-primary)]">
                               {contract.contract_number} · {contract.contractor_name}
                             </p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-[var(--text-secondary)]">
                               {contract.contract_type} · {formatDate(contract.start_date)} →{" "}
                               {formatDate(contract.end_date)} ·{" "}
                               {contract.is_active_on_event_date ? "active on event date" : "not active on event date"}
                             </p>
-                            <p className="mt-1 text-xs text-slate-400">{contract.date_note}</p>
+                            <p className="mt-1 text-xs text-[var(--text-muted)]">{contract.date_note}</p>
                             {contract.scope_notes ? (
-                              <p className="mt-1 text-xs text-amber-200/80">{contract.scope_notes}</p>
+                              <p className="mt-1 text-xs" style={{ color: "var(--status-warn)" }}>{contract.scope_notes}</p>
                             ) : null}
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-sm text-slate-500">No contract records cover this asset.</p>
+                      <p className="text-sm text-[var(--text-muted)]">No contract records cover this asset.</p>
                     )}
                   </div>
                   {responsibility.missing_records.length ? (
                     <div className="mt-3">
-                      <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Missing records</p>
+                      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Missing records</p>
                       <TagList tone="command" items={responsibility.missing_records} />
                     </div>
                   ) : null}
                   {responsibility.conflicts.length ? (
                     <div className="mt-3">
-                      <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Conflicts</p>
+                      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Conflicts</p>
                       <TagList tone="command" items={responsibility.conflicts} />
                     </div>
                   ) : null}
-                  <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-100/80">
+                  <p
+                    className="mt-4 rounded-[10px] border px-3.5 py-2 text-xs"
+                    style={{
+                      backgroundColor: "var(--demo-bg)",
+                      borderColor: "var(--demo-border)",
+                      color: "var(--demo-text)",
+                    }}
+                  >
                     {responsibility.disclaimer}
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--text-muted)]">
                   This case has no linked asset yet. Record match results appear once an asset is
                   associated.
                 </p>
@@ -256,42 +257,42 @@ export default function InvestigationDetailPage() {
               }
               tone="command"
             />
-            <div className="space-y-3 px-4 py-4">
+            <div className="space-y-3 px-5 py-4">
               {hypotheses.length ? (
                 hypotheses.map((hypothesis, index) => (
-                  <div key={`${hypothesis.hypothesis}-${index}`} className="rounded-lg border border-[#1e2b3c] bg-[#0b1320] px-3 py-2">
-                    <p className="text-sm text-slate-100">{hypothesis.hypothesis}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                  <div key={`${hypothesis.hypothesis}-${index}`} className="surface-data rounded-[10px] px-3.5 py-2.5">
+                    <p className="text-sm text-[var(--text-primary)]">{hypothesis.hypothesis}</p>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
                       Confidence label: {hypothesis.confidence_label} · supporting records:{" "}
                       {hypothesis.supporting_record_ids.length || "none"}
                     </p>
                     {hypothesis.counter_evidence.length ? (
-                      <p className="mt-1 text-xs text-amber-200/80">
+                      <p className="mt-1 text-xs" style={{ color: "var(--status-warn)" }}>
                         Counter-evidence: {hypothesis.counter_evidence.join("; ")}
                       </p>
                     ) : null}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--text-muted)]">
                   No hypotheses drafted yet. Hypotheses are possibilities to check, not conclusions.
                 </p>
               )}
               {analysis ? (
                 <>
                   <div>
-                    <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Missing information</p>
+                    <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Missing information</p>
                     <TagList tone="command" items={analysis.missing_information} />
                   </div>
                   <div>
-                    <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Limitations</p>
+                    <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Limitations</p>
                     <TagList tone="command" items={analysis.limitations} />
                   </div>
                   <div>
-                    <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Likely responsible authorities</p>
+                    <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Likely responsible authorities</p>
                     <TagList tone="command" items={analysis.potentially_relevant_authorities} emptyLabel="Not determined from records" />
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[var(--text-muted)]">
                     Human verification required: {analysis.human_verification_required ? "yes" : "no"}.
                   </p>
                 </>
@@ -304,27 +305,27 @@ export default function InvestigationDetailPage() {
             {data.evidence.length || data.incident_evidence.length ? (
               <EvidenceGrid items={[...data.evidence, ...data.incident_evidence]} />
             ) : (
-              <p className="px-4 py-6 text-sm text-slate-500">No evidence attached to this case.</p>
+              <p className="px-5 py-6 text-sm text-[var(--text-muted)]">No evidence attached to this case.</p>
             )}
           </Card>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Card tone="command">
             <CardHeader
               title="Recommendations"
               tone="command"
               actions={
-                has("recommendation:create") ? (
+                has("recommendation:create") || has("investigation:manage") ? (
                   <Button tone="command" variant="secondary" onClick={() => setShowRecommendation((value) => !value)}>
                     {showRecommendation ? "Close" : "Draft"}
                   </Button>
                 ) : null
               }
             />
-            <div className="space-y-3 px-4 py-4">
+            <div className="space-y-3 px-5 py-4">
               {showRecommendation ? (
-                <form onSubmit={submitRecommendation} className="space-y-2 rounded-lg border border-[#1e2b3c] bg-[#0b1320] p-3">
+                <form onSubmit={submitRecommendation} className="surface-data space-y-3 rounded-[10px] p-3.5">
                   <Field label="Recommendation" tone="command" htmlFor="recommendation_text">
                     <Textarea tone="command" id="recommendation_text" name="recommendation_text" rows={3} required minLength={5} />
                   </Field>
@@ -332,15 +333,11 @@ export default function InvestigationDetailPage() {
                     <Textarea tone="command" id="rationale" name="rationale" rows={2} required minLength={5} />
                   </Field>
                   <Field label="Priority" tone="command" htmlFor="priority">
-                    <select
-                      id="priority"
-                      name="priority"
-                      className="w-full rounded-lg border border-[#243449] bg-[#0b1320] px-3 py-2 text-sm text-slate-100"
-                    >
+                    <Select id="priority" name="priority">
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
-                    </select>
+                    </Select>
                   </Field>
                   <Button tone="command" type="submit" disabled={busy}>
                     Save draft
@@ -349,18 +346,18 @@ export default function InvestigationDetailPage() {
               ) : null}
 
               {data.recommendations.length ? (
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   {data.recommendations.map((recommendation) => (
-                    <li key={recommendation.id} className="rounded-lg border border-[#1e2b3c] bg-[#0b1320] px-3 py-2">
+                    <li key={recommendation.id} className="surface-data rounded-[10px] px-3.5 py-2.5">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-slate-100">{recommendation.recommendation_text}</p>
+                        <p className="text-sm text-[var(--text-primary)]">{recommendation.recommendation_text}</p>
                         <StatusBadge status={recommendation.status} />
                       </div>
-                      <p className="mt-1 text-xs text-slate-400">{recommendation.rationale}</p>
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <p className="mt-1 text-xs text-[var(--text-secondary)]">{recommendation.rationale}</p>
+                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">
                         Priority {recommendation.priority} · created {formatDateTime(recommendation.created_at)}
                       </p>
-                      {recommendation.status === "draft" && has("recommendation:approve") ? (
+                      {recommendation.status === "draft" && (has("recommendation:approve") || has("recommendation:review")) ? (
                         <div className="mt-2 flex gap-2">
                           <Button
                             tone="command"
@@ -379,7 +376,7 @@ export default function InvestigationDetailPage() {
                           </Button>
                         </div>
                       ) : null}
-                      {recommendation.status === "approved" && has("work_order:create") ? (
+                      {recommendation.status === "approved" && (has("work_order:create") || has("work_order:manage")) ? (
                         <Button
                           tone="command"
                           variant="secondary"
@@ -391,7 +388,7 @@ export default function InvestigationDetailPage() {
                       ) : null}
                       {recommendation.created_by === session?.user.id &&
                       recommendation.status === "draft" ? (
-                        <p className="mt-1 text-[11px] text-amber-200/80">
+                        <p className="mt-1 text-[11px]" style={{ color: "var(--status-warn)" }}>
                           You drafted this. A different user must approve it.
                         </p>
                       ) : null}
@@ -399,7 +396,7 @@ export default function InvestigationDetailPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-500">No recommendations drafted.</p>
+                <p className="text-sm text-[var(--text-muted)]">No recommendations drafted.</p>
               )}
             </div>
           </Card>
@@ -409,30 +406,25 @@ export default function InvestigationDetailPage() {
               title="Work orders"
               tone="command"
               actions={
-                has("work_order:create") && !showWorkOrder ? (
+                (has("work_order:create") || has("work_order:manage")) && !showWorkOrder ? (
                   <Button tone="command" variant="secondary" onClick={() => setShowWorkOrder({ recommendationId: null })}>
                     New
                   </Button>
                 ) : null
               }
             />
-            <div className="space-y-3 px-4 py-4">
+            <div className="space-y-3 px-5 py-4">
               {showWorkOrder ? (
-                <form onSubmit={createWorkOrder} className="space-y-2 rounded-lg border border-[#1e2b3c] bg-[#0b1320] p-3">
+                <form onSubmit={createWorkOrder} className="surface-data space-y-3 rounded-[10px] p-3.5">
                   <Field label="Department" tone="command" htmlFor="assigned_department_id">
-                    <select
-                      id="assigned_department_id"
-                      name="assigned_department_id"
-                      required
-                      className="w-full rounded-lg border border-[#243449] bg-[#0b1320] px-3 py-2 text-sm text-slate-100"
-                    >
+                    <Select id="assigned_department_id" name="assigned_department_id" required>
                       <option value="">Select a department</option>
                       {(departments.data ?? []).map((department) => (
                         <option key={department.id} value={department.id}>
                           {department.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </Field>
                   <Field label="Title" tone="command" htmlFor="title">
                     <Textarea tone="command" id="title" name="title" rows={1} required minLength={4} />
@@ -446,7 +438,7 @@ export default function InvestigationDetailPage() {
                   <Button tone="command" type="submit" disabled={busy}>
                     Create work order
                   </Button>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[var(--text-muted)]">
                     The department must accept, complete and attach evidence; a different user then
                     verifies it.
                   </p>
@@ -457,41 +449,41 @@ export default function InvestigationDetailPage() {
                 <DataTable tone="command" head={["WO", "Status", "Priority"]}>
                   {data.work_orders.map((workOrder) => (
                     <Row key={workOrder.id} tone="command">
-                      <td className="px-3 py-2">
-                        <Link href={`/admin/work-orders/${workOrder.id}`} className="font-mono text-xs text-sky-300 hover:underline">
+                      <td className="px-3 py-2.5">
+                        <Link href={`/admin/work-orders/${workOrder.id}`} className="font-mono text-xs font-medium text-[var(--accent-primary)] hover:underline">
                           {workOrder.work_order_number}
                         </Link>
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2.5">
                         <StatusBadge status={workOrder.status} />
                       </td>
-                      <td className="px-3 py-2 text-xs text-slate-400">{workOrder.priority}</td>
+                      <td className="px-3 py-2.5 text-xs text-[var(--text-secondary)]">{workOrder.priority}</td>
                     </Row>
                   ))}
                 </DataTable>
               ) : (
-                <p className="text-sm text-slate-500">No work orders raised from this case.</p>
+                <p className="text-sm text-[var(--text-muted)]">No work orders raised from this case.</p>
               )}
             </div>
           </Card>
 
-          <Card tone="command">
+          <Card tone="command" variant="secondary">
             <CardHeader title="Nearby assets" tone="command" />
-            <div className="px-4 py-3">
+            <div className="px-5 py-3.5">
               {data.nearby_assets.length ? (
-                <ul className="space-y-1 text-xs text-slate-400">
+                <ul className="space-y-1.5 text-xs text-[var(--text-secondary)]">
                   {data.nearby_assets.map((asset) => (
                     <li key={asset.asset_id}>
-                      <span className="text-slate-200">{asset.asset_code}</span> · {asset.name} ·{" "}
+                      <span className="font-mono font-medium text-[var(--text-primary)]">{asset.asset_code}</span> · {asset.name} ·{" "}
                       {asset.distance_meters.toFixed(0)} m
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-500">No registered assets nearby.</p>
+                <p className="text-sm text-[var(--text-muted)]">No registered assets nearby.</p>
               )}
               {data.source_records.length ? (
-                <p className="mt-3 text-[11px] text-slate-500">
+                <p className="mt-3 text-[11px] text-[var(--text-muted)]">
                   Source records: {data.source_records.join(", ")}.
                 </p>
               ) : null}

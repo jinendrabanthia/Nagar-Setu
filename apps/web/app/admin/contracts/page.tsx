@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -16,6 +17,7 @@ import {
   PageHeader,
   PermissionNotice,
   Row,
+  Select,
   Textarea,
 } from "@/components/ui";
 import { formatDate, humanise } from "@/lib/format";
@@ -32,7 +34,9 @@ export default function ContractsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
 
-  if (!has("registry:read")) return <PermissionNotice tone="admin" permission="registry:read" />;
+  if (!has("registry:read") && !has("contract:read")) {
+    return <PermissionNotice tone="admin" permission="contract:read" />;
+  }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +73,7 @@ export default function ContractsPage() {
         description="Contracts record who is responsible for which asset over which dates. A contract that ended before the event date is reported as not active — never as current responsibility."
         tone="admin"
         actions={
-          has("registry:manage") ? (
+          has("registry:manage") || has("contract:manage") ? (
             <Button tone="admin" onClick={() => setOpen((value) => !value)}>
               {open ? "Close" : "Add contract"}
             </Button>
@@ -77,16 +81,12 @@ export default function ContractsPage() {
         }
       />
 
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {error}
-        </p>
-      ) : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {open ? (
-        <Card tone="admin" className="mb-4">
+        <Card tone="admin" className="mb-5">
           <CardHeader title="New contract" tone="admin" />
-          <form onSubmit={create} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={create} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Contract number" tone="admin" htmlFor="contract_number">
               <Input tone="admin" id="contract_number" name="contract_number" required minLength={2} />
             </Field>
@@ -94,34 +94,24 @@ export default function ContractsPage() {
               <Input tone="admin" id="contract_type" name="contract_type" required minLength={2} defaultValue="maintenance" />
             </Field>
             <Field label="Contractor" tone="admin" htmlFor="contractor_id">
-              <select
-                id="contractor_id"
-                name="contractor_id"
-                required
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
+              <Select id="contractor_id" name="contractor_id" required>
                 <option value="">Select a contractor</option>
                 {(contractors.data ?? []).map((contractor) => (
                   <option key={contractor.id} value={contractor.id}>
                     {contractor.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Department" tone="admin" htmlFor="department_id">
-              <select
-                id="department_id"
-                name="department_id"
-                required
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
+              <Select id="department_id" name="department_id" required>
                 <option value="">Select a department</option>
                 {(departments.data ?? []).map((department) => (
                   <option key={department.id} value={department.id}>
                     {department.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Start date" tone="admin" htmlFor="start_date">
               <Input tone="admin" id="start_date" name="start_date" type="date" required />
@@ -141,10 +131,10 @@ export default function ContractsPage() {
               </Field>
             </div>
             <div className="sm:col-span-2">
-              <p className="mb-1 text-sm font-medium text-slate-900">Covered assets</p>
-              <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-2">
+              <p className="mb-1.5 text-xs font-medium text-[var(--text-primary)]">Covered assets</p>
+              <div className="surface-data max-h-40 space-y-1.5 overflow-y-auto rounded-[10px] p-3">
                 {(assets.data ?? []).map((asset) => (
-                  <label key={asset.id} className="flex items-center gap-2 text-xs text-slate-700">
+                  <label key={asset.id} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                     <input
                       type="checkbox"
                       checked={selectedAssets.includes(asset.id)}
@@ -156,7 +146,7 @@ export default function ContractsPage() {
                         )
                       }
                     />
-                    {asset.asset_code} — {asset.name}
+                    <span className="font-mono">{asset.asset_code}</span> — {asset.name}
                   </label>
                 ))}
               </div>
@@ -184,15 +174,15 @@ export default function ContractsPage() {
           >
             {(contracts.data ?? []).map((contract) => (
               <Row key={contract.id} tone="admin">
-                <td className="px-4 py-2 font-mono text-xs text-slate-700">{contract.contract_number}</td>
-                <td className="px-4 py-2 text-slate-900">{contract.contractor_name ?? "—"}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{contract.department_name ?? "—"}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{humanise(contract.contract_type)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{contract.contract_number}</td>
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{contract.contractor_name ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{contract.department_name ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(contract.contract_type)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                   {formatDate(contract.start_date)} → {formatDate(contract.end_date)}
                 </td>
-                <td className="px-4 py-2 text-xs tabular-nums text-slate-500">{contract.asset_ids.length}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{contract.is_demo ? "DEMO" : "—"}</td>
+                <td className="px-4 py-3 text-xs tabular-nums text-[var(--text-primary)]">{contract.asset_ids.length}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-muted)]">{contract.is_demo ? "DEMO" : "—"}</td>
               </Row>
             ))}
           </DataTable>

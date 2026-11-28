@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -28,7 +29,9 @@ export default function DepartmentsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!has("registry:read")) return <PermissionNotice tone="admin" permission="registry:read" />;
+  if (!has("registry:read") && !has("department:read")) {
+    return <PermissionNotice tone="admin" permission="department:read" />;
+  }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +62,7 @@ export default function DepartmentsPage() {
         description="Owning authorities for infrastructure assets. Contract lookup depends on this registry being accurate."
         tone="admin"
         actions={
-          has("registry:manage") ? (
+          has("registry:manage") || has("department:manage") ? (
             <Button tone="admin" onClick={() => setOpen((value) => !value)}>
               {open ? "Close" : "Add department"}
             </Button>
@@ -67,16 +70,12 @@ export default function DepartmentsPage() {
         }
       />
 
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {error}
-        </p>
-      ) : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {open ? (
-        <Card tone="admin" className="mb-4">
+        <Card tone="admin" className="mb-5">
           <CardHeader title="New department" tone="admin" />
-          <form onSubmit={create} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={create} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Name" tone="admin" htmlFor="name">
               <Input tone="admin" id="name" name="name" required minLength={2} />
             </Field>
@@ -113,12 +112,12 @@ export default function DepartmentsPage() {
           <DataTable tone="admin" head={["Name", "Type", "Contact", "Source", "Created", "Demo"]} empty="No departments recorded.">
             {(departments.data ?? []).map((department) => (
               <Row key={department.id} tone="admin">
-                <td className="px-4 py-2 font-medium text-slate-900">{department.name}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{humanise(department.department_type)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{department.contact_email ?? "—"}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{department.source_reference ?? "—"}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(department.created_at)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{department.is_demo ? "DEMO" : "—"}</td>
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{department.name}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(department.department_type)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{department.contact_email ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{department.source_reference ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(department.created_at)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-muted)]">{department.is_demo ? "DEMO" : "—"}</td>
               </Row>
             ))}
           </DataTable>

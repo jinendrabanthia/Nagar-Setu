@@ -44,19 +44,19 @@ export default function InvestigationsPage() {
           >
             {(investigations.data ?? []).map((investigation) => (
               <Row key={investigation.id} tone="command">
-                <td className="px-4 py-2 font-mono text-xs text-slate-300">{investigation.case_number}</td>
-                <td className="px-4 py-2 text-slate-100">{investigation.title}</td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{investigation.case_number}</td>
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{investigation.title}</td>
+                <td className="px-4 py-3">
                   <StatusBadge status={investigation.status} />
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-400">
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                   {humanise(investigation.responsibility_status)}
                 </td>
-                <td className="px-4 py-2 tabular-nums text-slate-300">{investigation.hypotheses.length}</td>
-                <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(investigation.updated_at)}</td>
-                <td className="px-4 py-2 text-right">
-                  <Link href={`/command/investigations/${investigation.id}`} className="text-xs text-sky-300 hover:underline">
-                    Open
+                <td className="px-4 py-3 tabular-nums text-[var(--text-primary)]">{investigation.hypotheses.length}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(investigation.updated_at)}</td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={`/command/investigations/${investigation.id}`} className="text-xs font-medium text-[var(--accent-primary)] hover:underline">
+                    Open →
                   </Link>
                 </td>
               </Row>

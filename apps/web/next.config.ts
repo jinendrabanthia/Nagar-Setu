@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "x-content-type-options", value: "nosniff" },
           { key: "x-frame-options", value: "DENY" },
-          { key: "referrer-policy", value: "no-referrer" },
+          { key: "referrer-policy", value: "strict-origin-when-cross-origin" },
         ],
       },
     ];

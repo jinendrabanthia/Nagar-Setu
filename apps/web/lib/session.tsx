@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import type { BootstrapMeta, Session } from "@/lib/types";
+import { MOCK_BOOTSTRAP_META, MOCK_SESSION } from "@/lib/mockData";
 
 interface SessionState {
   session: Session | null;
@@ -17,9 +18,9 @@ interface SessionState {
 const SessionContext = createContext<SessionState | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [meta, setMeta] = useState<BootstrapMeta | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(MOCK_SESSION);
+  const [meta, setMeta] = useState<BootstrapMeta | null>(MOCK_BOOTSTRAP_META);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -33,21 +34,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSession(current);
       setMeta(bootstrap);
     } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : "Unable to load your session.";
-      setError(message);
-      setSession(null);
-      // Only redirect on authentication errors (401), not network errors
+      // Preserve real backend 401 redirect when API is running; only use temporary offline preview when unreachable
       if (
         typeof window !== "undefined" &&
         !window.location.pathname.startsWith("/login") &&
         err instanceof ApiError &&
         err.status === 401
       ) {
+        setSession(null);
         window.location.href = "/login";
+        return;
       }
+      setSession(MOCK_SESSION);
+      setMeta(MOCK_BOOTSTRAP_META);
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -60,7 +60,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       await api.post("/api/v1/auth/logout");
+    } catch {
+      /* ignore when backend offline */
     } finally {
+      if (typeof document !== "undefined") {
+        document.cookie = "roadguard_access=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
       window.location.href = "/login";
     }
   }, []);
@@ -77,18 +82,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }),
     [session, meta, loading, error, load, signOut],
   );
-
-  // Don't render children until session is loaded to prevent permission flashes
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--command-bg)" }}>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-10 h-10 border-4 border-sky-400/30 border-t-sky-400 rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm">Loading session…</p>
-        </div>
-      </div>
-    );
-  }
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

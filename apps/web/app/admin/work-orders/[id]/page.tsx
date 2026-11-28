@@ -7,6 +7,7 @@ import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import { EvidenceGrid } from "@/components/EvidenceGrid";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -130,22 +131,14 @@ export default function WorkOrderDetailPage() {
         actions={<StatusBadge status={order.status} />}
       />
 
-      {notice ? (
-        <p className="mb-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          {notice}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {error}
-        </p>
-      ) : null}
+      {notice ? <AlertBanner kind="success">{notice}</AlertBanner> : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
           <Card tone="admin">
             <CardHeader title="Work details" tone="admin" />
-            <div className="px-4 py-4">
+            <div className="px-5 py-4">
               <KeyValue
                 tone="admin"
                 items={[
@@ -159,9 +152,9 @@ export default function WorkOrderDetailPage() {
                 ]}
               />
               {order.completion_notes ? (
-                <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Completion notes</p>
-                  {order.completion_notes}
+                <div className="surface-data mt-4 rounded-[10px] px-3.5 py-2.5 text-sm text-[var(--text-primary)]">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Completion notes</p>
+                  <p className="mt-1">{order.completion_notes}</p>
                 </div>
               ) : null}
             </div>
@@ -172,7 +165,7 @@ export default function WorkOrderDetailPage() {
             {order.evidence.length ? (
               <EvidenceGrid items={order.evidence} />
             ) : (
-              <p className="px-4 py-6 text-sm text-slate-500">No evidence attached yet.</p>
+              <p className="px-5 py-6 text-sm text-[var(--text-muted)]">No evidence attached yet.</p>
             )}
           </Card>
 
@@ -182,25 +175,25 @@ export default function WorkOrderDetailPage() {
               <DataTable tone="admin" head={["From", "To", "Note", "When"]}>
                 {order.history.map((entry) => (
                   <Row key={entry.id} tone="admin">
-                    <td className="px-4 py-2 text-xs text-slate-500">{humanise(entry.from_status)}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(entry.from_status)}</td>
+                    <td className="px-4 py-3">
                       <StatusBadge status={entry.to_status} />
                     </td>
-                    <td className="px-4 py-2 text-xs text-slate-600">{entry.note ?? "—"}</td>
-                    <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(entry.created_at)}</td>
+                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{entry.note ?? "—"}</td>
+                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(entry.created_at)}</td>
                   </Row>
                 ))}
               </DataTable>
             ) : (
-              <p className="px-4 py-6 text-sm text-slate-500">No transitions recorded.</p>
+              <p className="px-5 py-6 text-sm text-[var(--text-muted)]">No transitions recorded.</p>
             )}
           </Card>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Card tone="admin">
             <CardHeader title="Allowed transitions" tone="admin" />
-            <div className="flex flex-wrap gap-2 px-4 py-3">
+            <div className="flex flex-wrap gap-2 px-5 py-4">
               {order.allowed_transitions.length ? (
                 order.allowed_transitions.map((status) => (
                   <Button key={status} tone="admin" variant="secondary" onClick={() => void transition(status, `Moved to ${humanise(status)} from the admin portal.`)} disabled={busy}>
@@ -208,7 +201,7 @@ export default function WorkOrderDetailPage() {
                   </Button>
                 ))
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--text-muted)]">
                   No transitions available from this state for your role.
                 </p>
               )}
@@ -218,7 +211,7 @@ export default function WorkOrderDetailPage() {
           {order.can_submit_completion ? (
             <Card tone="admin">
               <CardHeader title="Submit completion" description="Attach evidence, then submit for verification." tone="admin" />
-              <form onSubmit={uploadEvidence} className="space-y-2 px-4 py-3">
+              <form onSubmit={uploadEvidence} className="space-y-3 px-5 py-4">
                 <Field label="Attach evidence file" tone="admin" htmlFor="file">
                   <Input tone="admin" id="file" name="file" type="file" accept="image/*,video/*,application/pdf" />
                 </Field>
@@ -229,15 +222,15 @@ export default function WorkOrderDetailPage() {
                   Upload evidence
                 </Button>
               </form>
-              <form onSubmit={submitCompletion} className="space-y-2 border-t border-slate-200 px-4 py-3">
+              <form onSubmit={submitCompletion} className="space-y-3 border-t border-[var(--border-subtle)] px-5 py-4">
                 <Field label="Completion notes" tone="admin" htmlFor="completion_notes" hint="Describe the work performed.">
                   <Textarea tone="admin" id="completion_notes" name="completion_notes" rows={3} required minLength={5} />
                 </Field>
                 <fieldset>
-                  <legend className="mb-1 text-sm font-medium text-slate-900">Evidence to submit</legend>
+                  <legend className="mb-1.5 text-xs font-medium text-[var(--text-primary)]">Evidence to submit</legend>
                   {order.evidence.length ? (
                     order.evidence.map((item) => (
-                      <label key={item.id} className="flex items-center gap-2 text-xs text-slate-700">
+                      <label key={item.id} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                         <input
                           type="checkbox"
                           checked={evidenceIds.includes(item.id)}
@@ -253,7 +246,7 @@ export default function WorkOrderDetailPage() {
                       </label>
                     ))
                   ) : (
-                    <p className="text-xs text-slate-500">Upload at least one file first.</p>
+                    <p className="text-xs text-[var(--text-muted)]">Upload at least one file first.</p>
                   )}
                 </fieldset>
                 <Button tone="admin" type="submit" disabled={busy}>
@@ -266,22 +259,22 @@ export default function WorkOrderDetailPage() {
           {order.can_verify ? (
             <Card tone="admin">
               <CardHeader title="Verification" description="Only a user who did not complete the work may verify it." tone="admin" />
-              <div className="space-y-2 px-4 py-3">
-                <Button tone="admin" onClick={() => void verify("accepted")} disabled={busy}>
+              <div className="space-y-2.5 px-5 py-4">
+                <Button tone="admin" onClick={() => void verify("accepted")} disabled={busy} className="w-full">
                   Accept completion
                 </Button>
-                <Button tone="admin" variant="secondary" onClick={() => void verify("needs_more_evidence")} disabled={busy}>
+                <Button tone="admin" variant="secondary" onClick={() => void verify("needs_more_evidence")} disabled={busy} className="w-full">
                   Request more evidence
                 </Button>
-                <Button tone="admin" variant="danger" onClick={() => void verify("rejected")} disabled={busy}>
+                <Button tone="admin" variant="danger" onClick={() => void verify("rejected")} disabled={busy} className="w-full">
                   Reject completion
                 </Button>
               </div>
             </Card>
           ) : (
-            <Card tone="admin">
+            <Card tone="admin" variant="secondary">
               <CardHeader title="Verification" tone="admin" />
-              <p className="px-4 py-3 text-sm text-slate-500">
+              <p className="px-5 py-4 text-xs leading-relaxed text-[var(--text-muted)]">
                 {order.status === "completed_pending_verification"
                   ? "You cannot verify this completion (separation of duties, or your role lacks the permission)."
                   : "Verification opens once the department submits completion evidence."}
@@ -292,14 +285,14 @@ export default function WorkOrderDetailPage() {
           {order.verifications.length ? (
             <Card tone="admin">
               <CardHeader title="Verification records" tone="admin" />
-              <ul className="space-y-2 px-4 py-3 text-sm">
+              <ul className="space-y-2.5 px-5 py-4 text-sm">
                 {order.verifications.map((verification) => (
-                  <li key={verification.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                  <li key={verification.id} className="surface-data rounded-[10px] px-3.5 py-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <StatusBadge status={verification.verification_status} />
-                      <span className="text-xs text-slate-500">{formatDateTime(verification.verified_at)}</span>
+                      <span className="text-xs text-[var(--text-muted)]">{formatDateTime(verification.verified_at)}</span>
                     </div>
-                    <p className="mt-1 text-slate-700">{verification.notes}</p>
+                    <p className="mt-1.5 text-[var(--text-primary)]">{verification.notes}</p>
                   </li>
                 ))}
               </ul>

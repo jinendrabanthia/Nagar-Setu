@@ -38,15 +38,15 @@ export default function AuditLogsPage() {
           <DataTable tone="admin" head={["When", "Actor", "Action", "Entity", "Summary", "Request"]} empty="No audit entries recorded yet.">
             {(entries.data ?? []).map((entry) => (
               <Row key={entry.id} tone="admin">
-                <td className="whitespace-nowrap px-4 py-2 text-xs text-slate-500">{formatDateTime(entry.created_at)}</td>
-                <td className="px-4 py-2 text-xs text-slate-700">{entry.actor_label ?? "system"}</td>
-                <td className="px-4 py-2 font-mono text-xs text-slate-800">{entry.action}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(entry.created_at)}</td>
+                <td className="px-4 py-3 text-xs font-medium text-[var(--text-primary)]">{entry.actor_label ?? "system"}</td>
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{entry.action}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                   {entry.entity_type}
                   {entry.entity_id ? ` · ${entry.entity_id.slice(0, 8)}` : ""}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-600">{entry.summary ?? "—"}</td>
-                <td className="px-4 py-2 font-mono text-[10px] text-slate-400">
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{entry.summary ?? "—"}</td>
+                <td className="px-4 py-3 font-mono text-[10px] text-[var(--text-muted)]">
                   {entry.request_id ? entry.request_id.slice(0, 8) : "—"}
                 </td>
               </Row>

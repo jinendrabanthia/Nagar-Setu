@@ -8,6 +8,7 @@ import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import { EvidenceGrid } from "@/components/EvidenceGrid";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -115,7 +116,7 @@ export default function IncidentDetailPage() {
         actions={
           <>
             <StatusBadge status={record.review_status} />
-            {has("investigation:create") ? (
+            {has("investigation:create") || has("investigation:manage") ? (
               <Button tone="command" variant="secondary" onClick={() => void openInvestigation()} disabled={busy}>
                 Open investigation
               </Button>
@@ -124,19 +125,11 @@ export default function IncidentDetailPage() {
         }
       />
 
-      {notice ? (
-        <p className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-          {notice}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {notice ? <AlertBanner kind="success">{notice}</AlertBanner> : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
           <Card tone="command">
             <CardHeader
               title="Evidence"
@@ -154,7 +147,7 @@ export default function IncidentDetailPage() {
 
           <Card tone="command">
             <CardHeader title="Detection details" description="What the rule computed, and what it did not." tone="command" />
-            <div className="px-4 py-4">
+            <div className="px-5 py-4">
               <KeyValue
                 tone="command"
                 items={[
@@ -173,27 +166,27 @@ export default function IncidentDetailPage() {
                   ["Location", formatCoordinates(record.location?.latitude, record.location?.longitude)],
                 ]}
               />
-              <div className="mt-4 space-y-3">
+              <div className="mt-5 space-y-3">
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Reason codes</p>
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Reason codes</p>
                   <TagList tone="command" items={record.reason_codes} emptyLabel="No reason codes recorded" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
                     Limitations acknowledged by the pipeline
                   </p>
                   <TagList tone="command" items={record.limitations} emptyLabel="None recorded" />
                 </div>
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">Track ids</p>
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">Track ids</p>
                   <TagList tone="command" items={record.track_ids.map(String)} emptyLabel="No tracks" />
                 </div>
                 {Object.keys(record.features).length ? (
-                  <details className="rounded-lg border border-[#1e2b3c] bg-[#0b1320] px-3 py-2">
-                    <summary className="cursor-pointer text-xs text-slate-400">
+                  <details className="surface-data rounded-[10px] px-3.5 py-2.5">
+                    <summary className="cursor-pointer text-xs font-medium text-[var(--text-secondary)]">
                       Computed features (raw)
                     </summary>
-                    <pre className="mt-2 overflow-x-auto text-[11px] text-slate-400">
+                    <pre className="mt-2 overflow-x-auto font-mono text-[11px] text-[var(--text-secondary)]">
                       {JSON.stringify(record.features, null, 2)}
                     </pre>
                   </details>
@@ -203,17 +196,17 @@ export default function IncidentDetailPage() {
           </Card>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Card tone="command">
             <CardHeader title="Human review" description="Only a reviewer can change this state." tone="command" />
-            <div className="space-y-3 px-4 py-4">
+            <div className="space-y-3 px-5 py-4">
               {record.review_status !== "pending" ? (
-                <div className="rounded-lg border border-[#1e2b3c] bg-[#0b1320] px-3 py-2 text-xs text-slate-400">
-                  <p>
-                    Decided {formatDateTime(record.reviewed_at)} ·{" "}
+                <div className="surface-data rounded-[10px] px-3.5 py-2.5 text-xs text-[var(--text-secondary)]">
+                  <p className="flex flex-wrap items-center gap-2">
+                    <span>Decided {formatDateTime(record.reviewed_at)}</span>
                     <StatusBadge status={record.review_status} />
                   </p>
-                  {record.review_notes ? <p className="mt-1">{record.review_notes}</p> : null}
+                  {record.review_notes ? <p className="mt-1.5 text-[var(--text-primary)]">{record.review_notes}</p> : null}
                 </div>
               ) : null}
               {has("incident:review") ? (
@@ -228,7 +221,7 @@ export default function IncidentDetailPage() {
                       placeholder="What did you see in the evidence?"
                     />
                   </Field>
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {DECISIONS.map(([value, label, hint]) => (
                       <div key={value}>
                         <Button
@@ -240,26 +233,26 @@ export default function IncidentDetailPage() {
                         >
                           {label}
                         </Button>
-                        <p className="mt-1 text-[11px] text-slate-500">{hint}</p>
+                        <p className="mt-1 text-[11px] text-[var(--text-muted)]">{hint}</p>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--text-muted)]">
                   Your role cannot record review decisions.
                 </p>
               )}
             </div>
           </Card>
 
-          <Card tone="command">
+          <Card tone="command" variant="secondary">
             <CardHeader title="Responsible use" tone="command" />
-            <ul className="list-disc space-y-1 px-8 py-3 text-xs text-slate-400">
+            <ul className="list-disc space-y-1.5 px-8 py-3.5 text-xs text-[var(--text-secondary)]">
               <li>A confirmed observation is not an accident determination or a liability finding.</li>
               <li>Scores come from image-plane geometry; no physical speed is inferred.</li>
               <li>
-                <Link className="underline" href="/command/hotspots">
+                <Link className="font-medium text-[var(--accent-primary)] underline" href="/command/hotspots">
                   Hotspots
                 </Link>{" "}
                 aggregate records; they do not prove causation.

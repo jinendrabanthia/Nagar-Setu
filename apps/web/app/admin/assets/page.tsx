@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -16,6 +17,7 @@ import {
   PageHeader,
   PermissionNotice,
   Row,
+  Select,
   StatusBadge,
 } from "@/components/ui";
 import { formatCoordinates, humanise } from "@/lib/format";
@@ -40,7 +42,9 @@ export default function AssetsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!has("registry:read")) return <PermissionNotice tone="admin" permission="registry:read" />;
+  if (!has("registry:read") && !has("asset:read")) {
+    return <PermissionNotice tone="admin" permission="asset:read" />;
+  }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +86,7 @@ export default function AssetsPage() {
         description="Assets are what an event is matched to. Coordinates are required for a spatial match; without them the investigation reports 'no asset match' instead of guessing."
         tone="admin"
         actions={
-          has("registry:manage") ? (
+          has("registry:manage") || has("asset:manage") ? (
             <Button tone="admin" onClick={() => setOpen((value) => !value)}>
               {open ? "Close" : "Add asset"}
             </Button>
@@ -90,16 +94,12 @@ export default function AssetsPage() {
         }
       />
 
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {error}
-        </p>
-      ) : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {open ? (
-        <Card tone="admin" className="mb-4">
+        <Card tone="admin" className="mb-5">
           <CardHeader title="New asset" tone="admin" />
-          <form onSubmit={create} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={create} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Asset code" tone="admin" htmlFor="asset_code">
               <Input tone="admin" id="asset_code" name="asset_code" required minLength={2} />
             </Field>
@@ -107,46 +107,34 @@ export default function AssetsPage() {
               <Input tone="admin" id="name" name="name" required minLength={2} />
             </Field>
             <Field label="Asset type" tone="admin" htmlFor="asset_type">
-              <select
-                id="asset_type"
-                name="asset_type"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
+              <Select id="asset_type" name="asset_type">
                 {ASSET_TYPES.map((type) => (
                   <option key={type} value={type}>
                     {humanise(type)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Owning department" tone="admin" htmlFor="department_id">
-              <select
-                id="department_id"
-                name="department_id"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
+              <Select id="department_id" name="department_id">
                 <option value="">Unassigned</option>
                 {(departments.data ?? []).map((department) => (
                   <option key={department.id} value={department.id}>
                     {department.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Address" tone="admin" htmlFor="address">
               <Input tone="admin" id="address" name="address" />
             </Field>
             <Field label="Condition" tone="admin" htmlFor="condition_status">
-              <select
-                id="condition_status"
-                name="condition_status"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              >
+              <Select id="condition_status" name="condition_status">
                 <option value="unknown">Unknown</option>
                 <option value="good">Good</option>
                 <option value="fair">Fair</option>
                 <option value="poor">Poor</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Latitude" tone="admin" htmlFor="latitude" hint="Optional; needed for spatial matching.">
               <Input tone="admin" id="latitude" name="latitude" type="number" step="0.00001" />
@@ -177,20 +165,20 @@ export default function AssetsPage() {
           >
             {(assets.data ?? []).map((asset) => (
               <Row key={asset.id} tone="admin">
-                <td className="px-4 py-2 font-mono text-xs text-slate-700">{asset.asset_code}</td>
-                <td className="px-4 py-2 text-slate-900">
-                  {asset.name}
-                  {asset.address ? <span className="block text-xs text-slate-500">{asset.address}</span> : null}
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{asset.asset_code}</td>
+                <td className="px-4 py-3 text-[var(--text-primary)]">
+                  <span className="font-medium">{asset.name}</span>
+                  {asset.address ? <span className="block text-xs text-[var(--text-muted)]">{asset.address}</span> : null}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-500">{humanise(asset.asset_type)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{departmentName(asset.department_id)}</td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(asset.asset_type)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{departmentName(asset.department_id)}</td>
+                <td className="px-4 py-3">
                   <StatusBadge status={asset.condition_status} />
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-500">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">
                   {formatCoordinates(asset.location?.latitude, asset.location?.longitude)}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-500">{asset.is_demo ? "DEMO" : "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-muted)]">{asset.is_demo ? "DEMO" : "—"}</td>
               </Row>
             ))}
           </DataTable>

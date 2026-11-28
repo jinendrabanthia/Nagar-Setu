@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -16,6 +17,7 @@ import {
   PageHeader,
   PermissionNotice,
   Row,
+  Select,
   StatusBadge,
 } from "@/components/ui";
 import { formatDateTime, humanise } from "@/lib/format";
@@ -30,7 +32,9 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  if (!has("user:read")) return <PermissionNotice tone="admin" permission="user:read" />;
+  if (!has("user:read") && !has("user:manage")) {
+    return <PermissionNotice tone="admin" permission="user:manage" />;
+  }
 
   const roles = meta?.roles ?? [];
 
@@ -86,17 +90,13 @@ export default function UsersPage() {
         }
       />
 
-      {notice ? (
-        <p className="mb-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>
-      ) : null}
+      {notice ? <AlertBanner kind="success">{notice}</AlertBanner> : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {open ? (
-        <Card tone="admin" className="mb-4">
+        <Card tone="admin" className="mb-5">
           <CardHeader title="New user" tone="admin" />
-          <form onSubmit={create} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={create} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Full name" tone="admin" htmlFor="full_name">
               <Input tone="admin" id="full_name" name="full_name" required minLength={2} />
             </Field>
@@ -104,23 +104,23 @@ export default function UsersPage() {
               <Input tone="admin" id="email" name="email" type="email" required />
             </Field>
             <Field label="Role" tone="admin" htmlFor="role" hint="Permissions come from the role map on the server.">
-              <select id="role" name="role" required className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+              <Select id="role" name="role" required>
                 {roles.map((role) => (
                   <option key={role} value={role}>
                     {humanise(role)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Department (optional)" tone="admin" htmlFor="department_id">
-              <select id="department_id" name="department_id" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+              <Select id="department_id" name="department_id">
                 <option value="">None</option>
                 {(departments.data ?? []).map((department) => (
                   <option key={department.id} value={department.id}>
                     {department.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Initial password" tone="admin" htmlFor="password" hint="Minimum 12 characters. Share it out-of-band.">
               <Input tone="admin" id="password" name="password" type="password" required minLength={12} />
@@ -144,21 +144,21 @@ export default function UsersPage() {
           <DataTable tone="admin" head={["Name", "Email", "Role", "Department", "State", "Last sign-in", ""]} empty="No users recorded.">
             {(users.data ?? []).map((user) => (
               <Row key={user.id} tone="admin">
-                <td className="px-4 py-2 text-slate-900">{user.full_name}</td>
-                <td className="px-4 py-2 text-xs text-slate-600">{user.email}</td>
-                <td className="px-4 py-2 text-xs text-slate-600">{humanise(user.role)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{user.full_name}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{user.email}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(user.role)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                   {departments.data?.find((department) => department.id === user.department_id)?.name ?? "—"}
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3">
                   <StatusBadge status={user.is_active ? "active" : "offline"} label={user.is_active ? "Active" : "Disabled"} />
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(user.last_login_at)}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(user.last_login_at)}</td>
+                <td className="px-4 py-3 text-right">
                   {has("user:manage") ? (
                     <button
                       type="button"
-                      className="text-xs text-blue-700 hover:underline"
+                      className="text-xs font-medium text-[var(--accent-primary)] hover:underline"
                       disabled={busy}
                       onClick={() => void update(user, { is_active: !user.is_active })}
                     >

@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -27,7 +28,9 @@ export default function ContractorsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!has("registry:read")) return <PermissionNotice tone="admin" permission="registry:read" />;
+  if (!has("registry:read") && !has("contractor:read")) {
+    return <PermissionNotice tone="admin" permission="contractor:read" />;
+  }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,7 +61,7 @@ export default function ContractorsPage() {
         description="Registered contractors referenced by maintenance contracts. A contractor match is a record match, never an assignment of blame."
         tone="admin"
         actions={
-          has("registry:manage") ? (
+          has("registry:manage") || has("contractor:manage") ? (
             <Button tone="admin" onClick={() => setOpen((value) => !value)}>
               {open ? "Close" : "Add contractor"}
             </Button>
@@ -66,16 +69,12 @@ export default function ContractorsPage() {
         }
       />
 
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {error}
-        </p>
-      ) : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {open ? (
-        <Card tone="admin" className="mb-4">
+        <Card tone="admin" className="mb-5">
           <CardHeader title="New contractor" tone="admin" />
-          <form onSubmit={create} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={create} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Name" tone="admin" htmlFor="name">
               <Input tone="admin" id="name" name="name" required minLength={2} />
             </Field>
@@ -110,15 +109,15 @@ export default function ContractorsPage() {
           <DataTable tone="admin" head={["Name", "Registration", "Contact", "Source", "Created", "Demo"]} empty="No contractors recorded.">
             {(contractors.data ?? []).map((contractor) => (
               <Row key={contractor.id} tone="admin">
-                <td className="px-4 py-2 font-medium text-slate-900">{contractor.name}</td>
-                <td className="px-4 py-2 font-mono text-xs text-slate-600">{contractor.registration_number}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{contractor.name}</td>
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{contractor.registration_number}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                   {contractor.contact_email ?? "—"}
                   {contractor.contact_phone ? ` · ${contractor.contact_phone}` : ""}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-500">{contractor.source_reference ?? "—"}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(contractor.created_at)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{contractor.is_demo ? "DEMO" : "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{contractor.source_reference ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(contractor.created_at)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-muted)]">{contractor.is_demo ? "DEMO" : "—"}</td>
               </Row>
             ))}
           </DataTable>

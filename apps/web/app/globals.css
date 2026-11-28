@@ -1,28 +1,175 @@
 @import "tailwindcss";
 
-:root {
-  --command-bg: #070d16;
-  --command-panel: #0f1723;
-  --command-panel-alt: #131e2c;
-  --command-border: #1e2b3c;
-  --command-accent: #38bdf8;
-  --admin-bg: #f6f8fb;
-  --admin-panel: #ffffff;
-  --admin-border: #dfe6ee;
-  --admin-accent: #1d4ed8;
-  --focus: #f59e0b;
+/* ==========================================================================
+   ROADGUARD AI — LIQUID GLASS DESIGN SYSTEM
+   Porcelain Light (data-theme="light") + Graphite Dark (data-theme="dark")
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Core Surfaces — Porcelain Liquid */
+  --bg-primary: #f6f2ee;
+  --bg-secondary: #f0ebe6;
+  --bg-elevated: #ffffff;
+  --bg-subtle: rgba(117, 92, 83, 0.05);
+  --bg-hover: rgba(143, 38, 55, 0.045);
+
+  /* Glass Materials */
+  --glass-primary: rgba(255, 255, 255, 0.74);
+  --glass-secondary: rgba(255, 255, 255, 0.54);
+  --glass-floating: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(117, 92, 83, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.88);
+  --glass-shadow: 0 10px 35px rgba(76, 55, 48, 0.06);
+  --glass-shadow-lg: 0 18px 48px rgba(76, 55, 48, 0.1);
+
+  /* Typography */
+  --text-primary: #28232a;
+  --text-secondary: #746d72;
+  --text-muted: #989096;
+
+  /* Brand & Metallic Accents */
+  --accent-primary: #8f2637;
+  --accent-hover: #741c2c;
+  --accent-soft: rgba(143, 38, 55, 0.09);
+  --accent-contrast: #ffffff;
+  --accent-copper: #b78c78;
+  --accent-champagne: #d7bea6;
+  --accent-blush: #e9d9d6;
+
+  /* Borders */
+  --border-subtle: #e8e0da;
+  --border-strong: #d5c9c1;
+
+  /* Semantic Status Colors */
+  --status-success: #246a49;
+  --status-success-bg: rgba(36, 106, 73, 0.11);
+  --status-success-border: rgba(36, 106, 73, 0.28);
+
+  --status-warn: #9c5b14;
+  --status-warn-bg: rgba(180, 110, 24, 0.11);
+  --status-warn-border: rgba(180, 110, 24, 0.28);
+
+  --status-danger: #a12936;
+  --status-danger-bg: rgba(161, 41, 54, 0.1);
+  --status-danger-border: rgba(161, 41, 54, 0.26);
+
+  --status-info: #2e676a;
+  --status-info-bg: rgba(46, 103, 106, 0.1);
+  --status-info-border: rgba(46, 103, 106, 0.26);
+
+  --status-hotspot: #6d3c67;
+  --status-hotspot-bg: rgba(109, 60, 103, 0.11);
+  --status-hotspot-border: rgba(109, 60, 103, 0.28);
+
+  --status-neutral: #6b6367;
+  --status-neutral-bg: rgba(107, 99, 103, 0.1);
+  --status-neutral-border: rgba(107, 99, 103, 0.22);
+
+  /* Demo Banner */
+  --demo-bg: rgba(235, 221, 203, 0.58);
+  --demo-border: rgba(183, 140, 120, 0.42);
+  --demo-text: #4c392f;
+  --demo-icon: #9c5b14;
+
+  /* Map Canvas */
+  --map-bg: #ebe6df;
+  --focus: #8f2637;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Core Surfaces — Graphite Liquid (Neutral Charcoal / Warm Stone) */
+  --bg-primary: #171615;
+  --bg-secondary: #1c1a19;
+  --bg-elevated: #24211f;
+  --bg-subtle: rgba(230, 210, 194, 0.04);
+  --bg-hover: rgba(187, 101, 112, 0.08);
+
+  /* Glass Materials */
+  --glass-primary: rgba(43, 38, 36, 0.76);
+  --glass-secondary: rgba(34, 31, 29, 0.68);
+  --glass-floating: rgba(38, 34, 32, 0.9);
+  --glass-border: rgba(230, 210, 194, 0.12);
+  --glass-highlight: rgba(230, 210, 194, 0.06);
+  --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.26);
+  --glass-shadow-lg: 0 22px 54px rgba(0, 0, 0, 0.42);
+
+  /* Typography */
+  --text-primary: #f1eae3;
+  --text-secondary: #b7aba2;
+  --text-muted: #887d77;
+
+  /* Brand & Metallic Accents */
+  --accent-primary: #bb6570;
+  --accent-hover: #cf7b84;
+  --accent-soft: rgba(187, 101, 112, 0.14);
+  --accent-contrast: #171615;
+  --accent-copper: #bd8d70;
+  --accent-champagne: #d6c1a8;
+  --accent-blush: #61444a;
+
+  /* Borders */
+  --border-subtle: rgba(230, 210, 194, 0.14);
+  --border-strong: rgba(230, 210, 194, 0.24);
+
+  /* Semantic Status Colors */
+  --status-success: #79b896;
+  --status-success-bg: rgba(121, 184, 150, 0.14);
+  --status-success-border: rgba(121, 184, 150, 0.28);
+
+  --status-warn: #dfb06c;
+  --status-warn-bg: rgba(223, 176, 108, 0.14);
+  --status-warn-border: rgba(223, 176, 108, 0.28);
+
+  --status-danger: #dc7e85;
+  --status-danger-bg: rgba(220, 126, 133, 0.14);
+  --status-danger-border: rgba(220, 126, 133, 0.28);
+
+  --status-info: #85b8b6;
+  --status-info-bg: rgba(133, 184, 182, 0.14);
+  --status-info-border: rgba(133, 184, 182, 0.28);
+
+  --status-hotspot: #c79cc0;
+  --status-hotspot-bg: rgba(199, 156, 192, 0.14);
+  --status-hotspot-border: rgba(199, 156, 192, 0.28);
+
+  --status-neutral: #aba19b;
+  --status-neutral-bg: rgba(171, 161, 155, 0.13);
+  --status-neutral-border: rgba(171, 161, 155, 0.24);
+
+  /* Demo Banner */
+  --demo-bg: rgba(62, 48, 34, 0.56);
+  --demo-border: rgba(189, 141, 112, 0.3);
+  --demo-text: #e6d2b8;
+  --demo-icon: #dfb06c;
+
+  /* Map Canvas */
+  --map-bg: #1c1a19;
+  --focus: #cf7b84;
 }
 
 html,
 body {
   height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 220ms ease, color 220ms ease;
+  overflow-x: hidden;
+}
+
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 *:focus-visible {
@@ -30,25 +177,133 @@ body {
   outline-offset: 2px;
 }
 
-/* Leaflet needs an explicit height inside flex/grid panels. */
+/* ==========================================================================
+   LIQUID GLASS SURFACE HIERARCHY
+   ========================================================================== */
+
+/* 1. Primary Glass Panel — Content Containers */
+.glass-panel {
+  background: var(--glass-primary);
+  backdrop-filter: blur(18px) saturate(122%);
+  -webkit-backdrop-filter: blur(18px) saturate(122%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+/* 2. Secondary Glass Surface — Nested & Compact Cards */
+.glass-secondary {
+  background: var(--glass-secondary);
+  backdrop-filter: blur(14px) saturate(115%);
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+/* 3. Floating Glass — Overlays, Sidebars, Map Details, Modals */
+.glass-floating {
+  background: var(--glass-floating);
+  backdrop-filter: blur(22px) saturate(130%);
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow-lg);
+}
+
+/* 4. Flat Data Surface — Dense Tables, Inputs, Code */
+.surface-data {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.themed-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.themed-input::placeholder {
+  color: var(--text-muted);
+}
+
+.themed-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+/* Subtle Liquid Motion */
+@keyframes liquid-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.5%, -1.5%, 0) scale(1.025);
+  }
+}
+
+.animate-liquid-slow {
+  animation: liquid-drift 28s ease-in-out infinite;
+}
+
+/* Leaflet Overrides — Crisp Map Tiles with Theme Controls */
 .leaflet-container {
   height: 100%;
   width: 100%;
-  background: #dbe4ee;
+  background: var(--map-bg);
   font-family: inherit;
 }
 
-.map-marker {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: 9999px;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.4);
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--glass-floating) !important;
+  backdrop-filter: blur(16px);
+  color: var(--text-primary) !important;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-lg) !important;
+  border-radius: 12px !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--text-secondary) !important;
+}
+
+.leaflet-control-attribution {
+  background: var(--glass-floating) !important;
+  color: var(--text-secondary) !important;
+  border-top-left-radius: 8px;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  border-top: 1px solid var(--glass-border);
+  border-left: 1px solid var(--glass-border);
+}
+
+.leaflet-control-attribution a {
+  color: var(--accent-primary) !important;
 }
 
 table {
   border-collapse: collapse;
+}
+
+/* Scrollbar subtlety */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 9999px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -56,6 +311,7 @@ table {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }

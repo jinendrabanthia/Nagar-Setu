@@ -36,10 +36,10 @@ export default function WorkOrdersPage() {
         tone="admin"
       />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+      <div className="mb-5 grid gap-4 sm:grid-cols-3">
         <MetricCard tone="admin" label="Total" value={orders.length} hint="All work orders" />
         <MetricCard tone="admin" label="Awaiting verification" value={awaiting.length} hint="Evidence submitted" emphasis={awaiting.length ? "warn" : "default"} />
-        <MetricCard tone="admin" label="Verified" value={verified.length} hint="Independently checked" />
+        <MetricCard tone="admin" label="Verified" value={verified.length} hint="Independently checked" emphasis="success" />
       </div>
 
       <Card tone="admin">
@@ -56,18 +56,18 @@ export default function WorkOrdersPage() {
           >
             {orders.map((order) => (
               <Row key={order.id} tone="admin">
-                <td className="px-4 py-2 font-mono text-xs text-slate-700">{order.work_order_number}</td>
-                <td className="px-4 py-2 text-slate-900">{order.title}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{order.department_name ?? "—"}</td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{order.work_order_number}</td>
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{order.title}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{order.department_name ?? "—"}</td>
+                <td className="px-4 py-3">
                   <StatusBadge status={order.status} />
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-500">{humanise(order.priority)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{formatDate(order.due_date)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{formatDateTime(order.completed_at)}</td>
-                <td className="px-4 py-2 text-right">
-                  <Link href={`/admin/work-orders/${order.id}`} className="text-xs text-blue-700 hover:underline">
-                    Open
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{humanise(order.priority)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDate(order.due_date)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(order.completed_at)}</td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={`/admin/work-orders/${order.id}`} className="text-xs font-medium text-[var(--accent-primary)] hover:underline">
+                    Open →
                   </Link>
                 </td>
               </Row>

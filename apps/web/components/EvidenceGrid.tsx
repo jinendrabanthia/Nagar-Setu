@@ -39,28 +39,35 @@ export function EvidenceGrid({ items }: { items: Evidence[] }) {
 
   if (!items.length) {
     return (
-      <p className="px-4 py-6 text-sm text-slate-500">
+      <p className="px-5 py-6 text-sm text-[var(--text-muted)]">
         No evidence artefacts are attached to this record.
       </p>
     );
   }
 
   return (
-    <div className="space-y-3 px-4 py-4">
-      {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+    <div className="space-y-3 px-5 py-4">
+      {error ? (
+        <p className="text-sm" style={{ color: "var(--status-danger)" }}>
+          {error}
+        </p>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map((item) => {
           const url = urls[item.id];
           const isImage = item.content_type.startsWith("image/");
           const isVideo = item.content_type.startsWith("video/");
           return (
-            <div key={item.id} className="rounded-lg border border-[#1e2b3c] bg-[#0b1320] p-3">
+            <div
+              key={item.id}
+              className="surface-data rounded-[12px] p-3.5"
+            >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-medium text-slate-100">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     {item.label ?? humanise(item.evidence_type)}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[var(--text-muted)]">
                     {item.content_type} · {formatBytes(item.file_size_bytes)}
                     {item.timestamp_in_video !== null
                       ? ` · ${formatSeconds(item.timestamp_in_video)}`
@@ -72,19 +79,19 @@ export function EvidenceGrid({ items }: { items: Evidence[] }) {
               {url && isImage ? (
                 opened === item.id ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt={item.label ?? "Evidence frame"} className="w-full rounded" />
+                  <img src={url} alt={item.label ?? "Evidence frame"} className="w-full rounded-[8px]" />
                 ) : (
                   <button
                     type="button"
                     onClick={() => setOpened(item.id)}
-                    className="text-xs text-sky-300 hover:underline"
+                    className="text-xs font-medium text-[var(--accent-primary)] hover:underline"
                   >
                     Show frame
                   </button>
                 )
               ) : null}
               {url && isVideo ? (
-                <video controls src={url} className="w-full rounded">
+                <video controls src={url} className="w-full rounded-[8px]">
                   <track kind="captions" />
                 </video>
               ) : null}
@@ -93,18 +100,18 @@ export function EvidenceGrid({ items }: { items: Evidence[] }) {
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 block text-xs text-sky-300 hover:underline"
+                  className="mt-2 block text-xs font-medium text-[var(--accent-primary)] hover:underline"
                 >
                   Open in new tab (signed, short-lived)
                 </a>
               ) : (
-                <p className="text-xs text-slate-500">Preparing signed link…</p>
+                <p className="text-xs text-[var(--text-muted)]">Preparing signed link…</p>
               )}
             </div>
           );
         })}
       </div>
-      <p className="text-[11px] text-slate-500">
+      <p className="text-[11px] text-[var(--text-muted)]">
         Evidence files carry a checksum recorded at creation time. Generated frames are synthetic
         demo artefacts, not evidential photography.
       </p>

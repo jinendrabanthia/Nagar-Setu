@@ -1,30 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
+import {
+  AlertTriangle,
+  Archive,
+  Camera as CameraIcon,
+  CheckCircle2,
+  ClipboardCheck,
+  Upload,
+} from "lucide-react";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { MapPanel } from "@/components/MapPanel";
+import type { MapPoint } from "@/components/MapInner";
+import { EventsTable } from "@/components/EventsTable";
+import {
+  PriorityReviewQueue,
+  ProcessingJobs,
+  RealtimePanel,
+} from "@/components/OperationsPanels";
 import {
   Card,
   CardHeader,
-  DataTable,
-  ErrorState,
-  LoadingRows,
   MetricCard,
   PageHeader,
-  Row,
-  StatusBadge,
 } from "@/components/ui";
 import { formatDateTime, humanise } from "@/lib/format";
 import { useRealtime } from "@/lib/realtime";
-import type { Camera, Incident, IncidentAnalytics, Job } from "@/lib/types";
+import type {
+  AccidentRecord,
+  Camera,
+  HotspotAnalysis,
+  Incident,
+  IncidentAnalytics,
+  Job,
+} from "@/lib/types";
 
 export default function CommandOverviewPage() {
   const { session } = useSession();
   const analytics = useApi<IncidentAnalytics>("/api/v1/incidents/analytics");
-  const incidents = useApi<Incident[]>("/api/v1/incidents?limit=6");
+  const incidents = useApi<Incident[]>("/api/v1/incidents?limit=50");
   const cameras = useApi<Camera[]>("/api/v1/cameras?limit=50");
-  const jobs = useApi<Job[]>("/api/v1/jobs?limit=5");
+  const jobs = useApi<Job[]>("/api/v1/jobs?limit=6");
+  const accidents = useApi<AccidentRecord[]>("/api/v1/accident-records?limit=25");
+  const hotspots = useApi<HotspotAnalysis[]>("/api/v1/hotspots?limit=1");
+
   const realtime = useRealtime((event) => {
     if (event.event_type.startsWith("incident.")) incidents.reload();
     if (event.event_type.startsWith("video.")) jobs.reload();
@@ -32,232 +53,195 @@ export default function CommandOverviewPage() {
     analytics.reload();
   });
 
-  const located = (incidents.data ?? []).filter((incident) => incident.location);
-  const points = [
-    ...located.map((incident) => ({
-      id: incident.id,
-      latitude: incident.location!.latitude,
-      longitude: incident.location!.longitude,
-      label: `${humanise(incident.incident_type)} · ${incident.severity ?? "severity unset"}`,
-      detail: `${incident.review_status.replace(/_/g, " ")} · ${formatDateTime(incident.event_time)}`,
-      layer:
-        incident.review_status === "confirmed"
-          ? "confirmed_observation"
-          : incident.review_status === "pending"
-            ? "pending_candidate"
-            : "event",
-    })),
-    ...(cameras.data ?? [])
+  const points = useMemo<MapPoint[]>(() => {
+    const incidentPoints: MapPoint[] = (incidents.data ?? [])
+      .filter((incident) => incident.location)
+      .map((incident) => ({
+        id: incident.id,
+        latitude: incident.location!.latitude,
+        longitude: incident.location!.longitude,
+        label: humanise(incident.incident_type),
+        detail: incident.description,
+        layer:
+          incident.review_status === "confirmed"
+            ? "confirmed_observation"
+            : incident.review_status === "pending"
+              ? "pending_candidate"
+              : "event",
+        status: incident.review_status,
+        severity: incident.severity,
+        timestamp: incident.event_time,
+        cameraCode: incident.camera_code,
+        confidence: incident.model_score,
+        href: `/command/incidents/${incident.id}`,
+      }));
+
+    const cameraPoints: MapPoint[] = (cameras.data ?? [])
       .filter((camera) => camera.location)
       .map((camera) => ({
         id: camera.id,
         latitude: camera.location!.latitude,
         longitude: camera.location!.longitude,
         label: `${camera.camera_code} · ${camera.name}`,
-        detail: camera.connection_status.replace(/_/g, " "),
+        detail: camera.description ?? camera.connection_status.replace(/_/g, " "),
         layer: "camera",
-      })),
-  ];
+        status: camera.connection_status,
+        timestamp: camera.last_seen_at,
+        href: `/command/monitoring?camera=${camera.id}`,
+      }));
+
+    const accidentPoints: MapPoint[] = (accidents.data ?? [])
+      .filter((record) => record.location)
+      .map((record) => ({
+        id: record.id,
+        latitude: record.location!.latitude,
+        longitude: record.location!.longitude,
+        label: record.road_name ?? "Historical accident record",
+        detail: `${humanise(record.accident_type)} · ${record.source_name}`,
+        layer: "historical_accident",
+        status: record.verification_status,
+        severity: record.severity,
+        timestamp: record.accident_time ?? record.accident_date,
+      }));
+
+    const hotspotPoints: MapPoint[] = (hotspots.data?.[0]?.clusters ?? []).map((cluster) => ({
+      id: cluster.cluster_key,
+      latitude: cluster.latitude,
+      longitude: cluster.longitude,
+      label: cluster.label,
+      detail: `${cluster.total_records} clustered records (${cluster.radius_meters}m radius)`,
+      layer: "hotspot",
+      timestamp: cluster.last_seen,
+      href: "/command/hotspots",
+    }));
+
+    return [...incidentPoints, ...cameraPoints, ...accidentPoints, ...hotspotPoints];
+  }, [incidents.data, cameras.data, accidents.data, hotspots.data]);
+
+  const onlineCameras = (cameras.data ?? []).filter(
+    (camera) => camera.connection_status === "online",
+  ).length;
+  const totalCameras = (cameras.data ?? []).length;
+  const org = session?.user.organization;
+  const cityLabel = org?.city ? `${org.city}${org.state ? `, ${org.state}` : ""}` : org?.name;
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
-        title={`Operations overview${session ? ` — ${session.user.organization.city ?? session.user.organization.name}` : ""}`}
-        description="Everything below is a candidate observation until a reviewer confirms it. Historical accident records are kept separate from AI events."
-        tone="command"
+        title="Operations Overview"
+        description="Your city's current safety picture at a glance. AI detections remain candidate observations until human verification; historical accident records stay segregated."
         actions={
           <>
             <Link
               href="/command/videos"
-              className="rounded-lg bg-sky-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-sky-400"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--accent-primary)] px-4 py-2 text-xs sm:text-sm font-medium text-[var(--accent-contrast)] shadow-xs transition hover:bg-[var(--accent-hover)]"
             >
-              Upload footage
+              <Upload className="h-4 w-4" aria-hidden="true" />
+              Upload Footage
             </Link>
             <Link
               href="/command/incidents"
-              className="rounded-lg border border-[#243449] px-3 py-1.5 text-sm text-slate-200 hover:bg-[#131e2c]"
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-4 py-2 text-xs sm:text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-secondary)]"
             >
-              Review queue
+              <ClipboardCheck className="h-4 w-4 text-[var(--accent-primary)]" aria-hidden="true" />
+              Review Queue
             </Link>
           </>
         }
       />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Four Equal-Height KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          tone="command"
-          label="AI candidate events"
+          label="AI Candidate Events"
           value={analytics.data?.pending_candidates ?? "—"}
           hint="Awaiting human review"
           emphasis="warn"
+          icon={<AlertTriangle className="h-4 w-4" aria-hidden="true" />}
         />
         <MetricCard
-          tone="command"
-          label="Human-confirmed"
+          label="Human Confirmed"
           value={analytics.data?.confirmed_observations ?? "—"}
           hint="Reviewed and accepted"
+          emphasis="success"
+          icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
         />
         <MetricCard
-          tone="command"
-          label="Historical accident records"
+          label="Historical Accident Records"
           value={analytics.data?.historical_accidents_in_window ?? "—"}
-          hint="Imported CSV records (separate source)"
+          hint="Imported records"
+          emphasis="hotspot"
+          icon={<Archive className="h-4 w-4" aria-hidden="true" />}
         />
         <MetricCard
-          tone="command"
-          label="Cameras online"
-          value={`${(cameras.data ?? []).filter((camera) => camera.connection_status === "online").length}/${(cameras.data ?? []).length || 0}`}
-          hint="Reporting online in the registry, not merely enabled"
+          label="Cameras Online"
+          value={`${onlineCameras}/${totalCameras}`}
+          hint="Reporting online"
+          emphasis="info"
+          icon={<CameraIcon className="h-4 w-4" aria-hidden="true" />}
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      {/* Primary City Safety Map (65-70%) + Operations Panel (30-35%) */}
+      <div className="grid gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-8">
           <MapPanel
-            tone="command"
             points={points}
-            title="Located events and cameras"
+            title="Located events, cameras & hotspots"
+            cityLabel={cityLabel}
             loading={incidents.loading || cameras.loading}
-            height={360}
+            height={520}
           />
         </div>
-        <div className="space-y-4">
-          <Card tone="command">
-            <CardHeader title="Source separation" description="Why the counts differ" tone="command" />
-            <div className="space-y-2 px-4 py-3 text-sm text-slate-300">
+
+        <div className="space-y-4 lg:col-span-4">
+          <PriorityReviewQueue
+            incidents={incidents.data ?? []}
+            loading={incidents.loading}
+            error={incidents.error}
+            onRetry={incidents.reload}
+          />
+
+          <RealtimePanel
+            status={realtime.status}
+            events={realtime.events}
+            lastRefreshed={analytics.data?.window_to ? formatDateTime(analytics.data.window_to) : null}
+          />
+
+          <ProcessingJobs
+            jobs={jobs.data ?? []}
+            loading={jobs.loading}
+            error={jobs.error}
+            onRetry={jobs.reload}
+          />
+
+          <Card variant="secondary">
+            <CardHeader title="Data provenance separation" />
+            <div className="space-y-2 px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">
               <p>
-                <strong className="text-slate-100">AI events</strong> come from the detection
-                pipeline and start as <em>pending</em> candidates.
+                <strong className="font-semibold text-[var(--text-primary)]">AI Candidate Events</strong>{" "}
+                originate from the vision pipeline and remain unverified proposals until reviewed.
               </p>
               <p>
-                <strong className="text-slate-100">Historical accidents</strong> are imported CSV
-                records with their own source reference; they are never merged into AI counts.
+                <strong className="font-semibold text-[var(--text-primary)]">Historical Records</strong>{" "}
+                are imported police datasets and are never merged into AI detection metrics.
               </p>
-              <p className="text-xs text-slate-500">{analytics.data?.data_note}</p>
+              {analytics.data?.data_note ? (
+                <p className="text-[11px] text-[var(--text-muted)]">{analytics.data.data_note}</p>
+              ) : null}
             </div>
-          </Card>
-          <Card tone="command">
-            <CardHeader
-              title="Realtime feed"
-              description="Server-pushed hints; REST stays authoritative."
-              tone="command"
-            />
-            <div className="px-4 py-3">
-              <p className="flex items-center gap-2 text-xs text-slate-400">
-                <span
-                  className={`inline-block h-2 w-2 rounded-full ${
-                    realtime.status === "live"
-                      ? "bg-emerald-400"
-                      : realtime.status === "blocked"
-                        ? "bg-rose-400"
-                        : "bg-amber-400"
-                  }`}
-                />
-                {realtime.status === "live"
-                  ? "Connected (ticket-authenticated)"
-                  : realtime.status === "blocked"
-                    ? "Realtime unavailable — data refreshes on navigation"
-                    : "Connecting…"}
-              </p>
-              {realtime.events.length ? (
-                <ul className="mt-2 space-y-1 text-xs text-slate-400">
-                  {realtime.events.slice(0, 5).map((event) => (
-                    <li key={event.event_id}>
-                      <span className="text-slate-200">{event.event_type}</span> ·{" "}
-                      {formatDateTime(event.occurred_at)}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-2 text-xs text-slate-500">
-                  No realtime events yet. Uploading footage or reviewing an event appears here.
-                </p>
-              )}
-            </div>
-          </Card>
-          <Card tone="command">
-            <CardHeader title="Recent processing jobs" tone="command" />
-            {jobs.loading ? (
-              <LoadingRows tone="command" />
-            ) : jobs.error ? (
-              <ErrorState tone="command" message={jobs.error} onRetry={jobs.reload} />
-            ) : (
-              <DataTable tone="command" head={["Job", "Status", "Stage"]}>
-                {(jobs.data ?? []).map((job) => (
-                  <Row key={job.id} tone="command">
-                    <td className="px-4 py-2 font-mono text-xs text-slate-400">
-                      {job.id.slice(0, 8)}
-                    </td>
-                    <td className="px-4 py-2">
-                      <StatusBadge status={job.status} />
-                    </td>
-                    <td className="px-4 py-2 text-xs text-slate-400">
-                      {job.stage.replace(/_/g, " ")} · {job.progress}%
-                    </td>
-                  </Row>
-                ))}
-              </DataTable>
-            )}
           </Card>
         </div>
       </div>
 
-      <div className="mt-4">
-        <Card tone="command">
-          <CardHeader
-            title="Latest events"
-            description={`${analytics.data?.pending_candidates ?? 0} candidate event(s) still need a review decision`}
-            tone="command"
-            actions={
-              <Link href="/command/incidents" className="text-xs text-sky-300 hover:underline">
-                View all →
-              </Link>
-            }
-          />
-          {incidents.loading ? (
-            <LoadingRows tone="command" />
-          ) : incidents.error ? (
-            <ErrorState tone="command" message={incidents.error} onRetry={incidents.reload} />
-          ) : (
-            <DataTable
-              tone="command"
-              head={["Event", "Review", "Score", "Camera", "When", ""]}
-              empty="No events yet — upload a clip to run the pipeline."
-            >
-              {(incidents.data ?? []).map((incident) => (
-                <Row key={incident.id} tone="command">
-                  <td className="px-4 py-2">
-                    <span className="font-medium text-slate-100">
-                      {humanise(incident.incident_type)}
-                    </span>
-                    <span className="ml-2 rounded bg-[#16222f] px-1.5 py-0.5 text-[10px] uppercase text-slate-400">
-                      {incident.source_kind === "ai_detected" ? "AI candidate" : "manual"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">
-                    <StatusBadge status={incident.review_status} />
-                  </td>
-                  <td className="px-4 py-2 tabular-nums text-slate-300">
-                    {incident.model_score !== null ? incident.model_score.toFixed(2) : "—"}
-                  </td>
-                  <td className="px-4 py-2 text-slate-400">{incident.camera_code ?? "—"}</td>
-                  <td className="px-4 py-2 text-xs text-slate-400">
-                    {formatDateTime(incident.event_time)}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <Link
-                      href={`/command/incidents/${incident.id}`}
-                      className="text-xs text-sky-300 hover:underline"
-                    >
-                      Open
-                    </Link>
-                  </td>
-                </Row>
-              ))}
-            </DataTable>
-          )}
-        </Card>
-      </div>
-    </>
+      {/* Latest Events Table */}
+      <EventsTable
+        incidents={incidents.data ?? []}
+        loading={incidents.loading}
+        error={incidents.error}
+        onRetry={incidents.reload}
+        pendingCount={analytics.data?.pending_candidates}
+      />
+    </div>
   );
 }

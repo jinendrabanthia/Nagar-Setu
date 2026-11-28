@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -16,6 +17,7 @@ import {
   PageHeader,
   PermissionNotice,
   Row,
+  Select,
   StatusBadge,
   Textarea,
 } from "@/components/ui";
@@ -88,21 +90,13 @@ export default function CamerasPage() {
         }
       />
 
-      {message ? (
-        <p className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-          {message}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {message ? <AlertBanner kind="success">{message}</AlertBanner> : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {showForm ? (
-        <Card tone="command" className="mb-4">
+        <Card tone="command" className="mb-5">
           <CardHeader title="Register a camera" tone="command" />
-          <form onSubmit={createCamera} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={createCamera} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Camera code" tone="command" htmlFor="camera_code">
               <Input tone="command" id="camera_code" name="camera_code" required minLength={2} />
             </Field>
@@ -110,15 +104,11 @@ export default function CamerasPage() {
               <Input tone="command" id="name" name="name" required minLength={2} />
             </Field>
             <Field label="Source type" tone="command" htmlFor="source_type" hint="RTSP stays disabled in this prototype.">
-              <select
-                id="source_type"
-                name="source_type"
-                className="w-full rounded-lg border border-[#243449] bg-[#0b1320] px-3 py-2 text-sm text-slate-100"
-              >
+              <Select id="source_type" name="source_type">
                 <option value="upload_association">Upload association</option>
                 <option value="simulated_live">Simulated live</option>
                 <option value="rtsp">RTSP (blocked)</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Description" tone="command" htmlFor="description">
               <Textarea tone="command" id="description" name="description" rows={2} />
@@ -152,22 +142,22 @@ export default function CamerasPage() {
           >
             {(cameras.data ?? []).map((camera) => (
               <Row key={camera.id} tone="command">
-                <td className="px-4 py-2 font-mono text-xs text-slate-300">{camera.camera_code}</td>
-                <td className="px-4 py-2 text-slate-100">{camera.name}</td>
-                <td className="px-4 py-2 text-xs text-slate-400">{camera.source_type.replace(/_/g, " ")}</td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{camera.camera_code}</td>
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{camera.name}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{camera.source_type.replace(/_/g, " ")}</td>
+                <td className="px-4 py-3">
                   <StatusBadge status={camera.connection_status} />
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-400">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">
                   {formatCoordinates(camera.location?.latitude, camera.location?.longitude)}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(camera.last_seen_at)}</td>
-                <td className="px-4 py-2 text-xs text-slate-300">{camera.is_enabled ? "Yes" : "No"}</td>
-                <td className="px-4 py-2 text-right">
-                  <div className="flex justify-end gap-2">
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(camera.last_seen_at)}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-primary)]">{camera.is_enabled ? "Yes" : "No"}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-3">
                     <a
                       href={`/command/monitoring?camera=${camera.id}`}
-                      className="text-xs text-sky-300 hover:underline"
+                      className="text-xs font-medium text-[var(--accent-primary)] hover:underline"
                     >
                       Monitor
                     </a>
@@ -175,7 +165,7 @@ export default function CamerasPage() {
                       <button
                         type="button"
                         onClick={() => void toggle(camera)}
-                        className="text-xs text-slate-300 hover:underline"
+                        className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline"
                       >
                         {camera.is_enabled ? "Disable" : "Enable"}
                       </button>

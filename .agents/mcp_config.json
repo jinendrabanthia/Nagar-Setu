@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://roadguard_app:local-dev-app-role-password@localhost:5432/roadguard"
+      ]
+    },
+    "playwright": {
+      "command": "npx.cmd",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/useApi";
 import { api, ApiError } from "@/lib/api";
 import {
+  AlertBanner,
   Button,
   Card,
   CardHeader,
@@ -16,6 +17,7 @@ import {
   PageHeader,
   PermissionNotice,
   Row,
+  Select,
   StatusBadge,
 } from "@/components/ui";
 import { formatBytes, formatDateTime, formatSeconds } from "@/lib/format";
@@ -110,47 +112,35 @@ export default function VideosPage() {
         tone="command"
       />
 
-      {notice ? (
-        <p className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-          {notice}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {notice ? <AlertBanner kind="success">{notice}</AlertBanner> : null}
+      {error ? <AlertBanner kind="danger">{error}</AlertBanner> : null}
 
       {has("video:upload") ? (
-        <Card tone="command" className="mb-4">
+        <Card tone="command" className="mb-5">
           <CardHeader
             title="Upload CCTV footage"
             description={`Accepted: ${(meta?.supported_content_types ?? ["video/mp4"]).join(", ")} · max ${formatBytes(maxBytes)} · max ${meta?.max_video_duration_seconds ?? 600}s`}
             tone="command"
           />
-          <form onSubmit={upload} className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+          <form onSubmit={upload} className="grid gap-4 px-5 py-4 sm:grid-cols-2">
             <Field label="Video file" tone="command" htmlFor="file" hint="Demo clip: datasets/sample_videos/demo_intersection_synthetic.mp4">
               <Input tone="command" id="file" name="file" type="file" accept="video/mp4,video/quicktime,video/x-matroska" required />
             </Field>
             <Field label="Camera (optional)" tone="command" htmlFor="camera_id">
-              <select
-                id="camera_id"
-                name="camera_id"
-                className="w-full rounded-lg border border-[#243449] bg-[#0b1320] px-3 py-2 text-sm text-slate-100"
-              >
+              <Select id="camera_id" name="camera_id">
                 <option value="">Unassigned</option>
                 {(cameras.data ?? []).map((camera) => (
                   <option key={camera.id} value={camera.id}>
                     {camera.camera_code} — {camera.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
-            <div className="sm:col-span-2 flex items-center gap-3">
+            <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
               <Button tone="command" type="submit" disabled={busy}>
                 {stageLabel[stage]}
               </Button>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-[var(--text-muted)]">
                 Uploading does not create an accident record. It creates private footage and a job.
               </span>
             </div>
@@ -158,7 +148,7 @@ export default function VideosPage() {
         </Card>
       ) : null}
 
-      <div className="grid gap-4">
+      <div className="grid gap-5">
         <Card tone="command">
           <CardHeader title="Footage" description="Private media. Playback links are short-lived and scoped to your organization." tone="command" />
           {videos.loading ? (
@@ -173,23 +163,25 @@ export default function VideosPage() {
             >
               {(videos.data ?? []).map((video) => (
                 <Row key={video.id} tone="command">
-                  <td className="px-4 py-2">
-                    <span className="block text-slate-100">{video.original_filename}</span>
-                    <span className="font-mono text-[11px] text-slate-500">{video.id.slice(0, 8)}</span>
+                  <td className="px-4 py-3">
+                    <span className="block font-medium text-[var(--text-primary)]">{video.original_filename}</span>
+                    <span className="font-mono text-[11px] text-[var(--text-muted)]">{video.id.slice(0, 8)}</span>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-3">
                     <StatusBadge status={video.status} />
                   </td>
-                  <td className="px-4 py-2 tabular-nums text-slate-300">{formatSeconds(video.duration_seconds)}</td>
-                  <td className="px-4 py-2 text-slate-400">{formatBytes(video.file_size_bytes)}</td>
-                  <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(video.created_at)}</td>
-                  <td className="px-4 py-2 text-xs text-rose-300">{video.validation_error ?? "—"}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{formatSeconds(video.duration_seconds)}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{formatBytes(video.file_size_bytes)}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(video.created_at)}</td>
+                  <td className="px-4 py-3 text-xs" style={{ color: video.validation_error ? "var(--status-danger)" : "var(--text-muted)" }}>
+                    {video.validation_error ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right">
                     {video.status === "failed" && has("video:process") ? (
                       <button
                         type="button"
                         onClick={() => void retry(video.id)}
-                        className="text-xs text-sky-300 hover:underline"
+                        className="text-xs font-medium text-[var(--accent-primary)] hover:underline"
                       >
                         Reprocess
                       </button>
@@ -229,25 +221,25 @@ export default function VideosPage() {
                     : null;
                 return (
                   <Row key={job.id} tone="command">
-                    <td className="px-4 py-2 font-mono text-xs text-slate-400">{job.id.slice(0, 8)}</td>
-                    <td className="px-4 py-2 font-mono text-xs text-slate-500">{job.video_id.slice(0, 8)}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{job.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">{job.video_id.slice(0, 8)}</td>
+                    <td className="px-4 py-3">
                       <StatusBadge status={job.status} />
                     </td>
-                    <td className="px-4 py-2 text-xs text-slate-400">{job.stage.replace(/_/g, " ")}</td>
-                    <td className="px-4 py-2 text-xs tabular-nums text-slate-300">{job.progress}%</td>
-                    <td className="px-4 py-2 text-xs text-slate-400">
+                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{job.stage.replace(/_/g, " ")}</td>
+                    <td className="px-4 py-3 text-xs font-mono tabular-nums text-[var(--text-primary)]">{job.progress}%</td>
+                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                       {job.model_name ? `${job.model_name} ${job.model_version ?? ""}` : "—"}
                     </td>
-                    <td className="px-4 py-2 text-xs tabular-nums text-slate-300">{events ?? "—"}</td>
-                    <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(job.completed_at)}</td>
+                    <td className="px-4 py-3 text-xs tabular-nums text-[var(--text-primary)]">{events ?? "—"}</td>
+                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(job.completed_at)}</td>
                   </Row>
                 );
               })}
             </DataTable>
           )}
           {activeVideo ? (
-            <p className="border-t border-[#1e2b3c] px-4 py-2 text-xs text-slate-500">
+            <p className="border-t border-[var(--border-subtle)] px-5 py-2.5 text-xs text-[var(--text-muted)]">
               Most recent upload: <span className="font-mono">{activeVideo}</span>
             </p>
           ) : null}

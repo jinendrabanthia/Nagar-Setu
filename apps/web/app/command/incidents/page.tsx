@@ -57,7 +57,16 @@ export default function IncidentsPage() {
 
   if (!has("incident:read")) return <PermissionNotice tone="command" permission="incident:read" />;
 
-  const pending = (incidents.data ?? []).filter((item) => item.review_status === "pending").length;
+  const visibleIncidents = useMemo(() => {
+    return (incidents.data ?? []).filter((item) => {
+      if (reviewStatus && item.review_status !== reviewStatus) return false;
+      if (incidentType && item.incident_type !== incidentType) return false;
+      if (cameraId && item.camera_id !== cameraId) return false;
+      return true;
+    });
+  }, [incidents.data, reviewStatus, incidentType, cameraId]);
+
+  const pending = visibleIncidents.filter((item) => item.review_status === "pending").length;
 
   return (
     <>
@@ -67,10 +76,10 @@ export default function IncidentsPage() {
         tone="command"
       />
 
-      <Card tone="command" className="mb-4">
-        <div className="grid gap-3 px-4 py-3 sm:grid-cols-3">
-          <label className="text-xs text-slate-400">
-            Review state
+      <Card tone="command" className="mb-5">
+        <div className="grid gap-3 px-5 py-4 sm:grid-cols-3">
+          <label className="text-xs font-medium text-[var(--text-secondary)]">
+            <span className="mb-1.5 block">Review state</span>
             <Select tone="command" value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value)}>
               {REVIEW_FILTERS.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -79,8 +88,8 @@ export default function IncidentsPage() {
               ))}
             </Select>
           </label>
-          <label className="text-xs text-slate-400">
-            Event type
+          <label className="text-xs font-medium text-[var(--text-secondary)]">
+            <span className="mb-1.5 block">Event type</span>
             <Select tone="command" value={incidentType} onChange={(event) => setIncidentType(event.target.value)}>
               {TYPE_FILTERS.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -89,8 +98,8 @@ export default function IncidentsPage() {
               ))}
             </Select>
           </label>
-          <label className="text-xs text-slate-400">
-            Camera
+          <label className="text-xs font-medium text-[var(--text-secondary)]">
+            <span className="mb-1.5 block">Camera</span>
             <Select tone="command" value={cameraId} onChange={(event) => setCameraId(event.target.value)}>
               <option value="">All cameras</option>
               {(cameras.data ?? []).map((camera) => (
@@ -106,7 +115,7 @@ export default function IncidentsPage() {
       <Card tone="command">
         <CardHeader
           title="Candidates"
-          description={`${incidents.data?.length ?? 0} showing · ${pending} pending a decision in this view`}
+          description={`${visibleIncidents.length} showing · ${pending} pending a decision in this view`}
           tone="command"
         />
         {incidents.loading ? (
@@ -119,36 +128,36 @@ export default function IncidentsPage() {
             head={["Event", "Review", "Score", "Window", "Camera", "Event time", "Reasons", ""]}
             empty="No events match these filters."
           >
-            {(incidents.data ?? []).map((incident) => (
+            {visibleIncidents.map((incident) => (
               <Row key={incident.id} tone="command">
-                <td className="px-4 py-2">
-                  <span className="block font-medium text-slate-100">
+                <td className="px-4 py-3">
+                  <span className="block font-medium text-[var(--text-primary)]">
                     {humanise(incident.incident_type)}
                   </span>
-                  <span className="text-[11px] uppercase tracking-wide text-slate-500">
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
                     {incident.source_kind === "ai_detected" ? "AI candidate" : "manual report"} ·{" "}
                     {incident.severity ?? "severity unset"}
                   </span>
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3">
                   <StatusBadge status={incident.review_status} />
                 </td>
-                <td className="px-4 py-2 tabular-nums text-slate-300">
+                <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-secondary)]">
                   {incident.model_score !== null ? incident.model_score.toFixed(2) : "—"}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-400">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">
                   {incident.start_offset_seconds !== null
                     ? `${incident.start_offset_seconds.toFixed(1)}s – ${incident.end_offset_seconds?.toFixed(1) ?? "?"}s`
                     : "—"}
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-400">{incident.camera_code ?? "—"}</td>
-                <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(incident.event_time)}</td>
-                <td className="px-4 py-2 text-[11px] text-slate-500">
+                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{incident.camera_code ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(incident.event_time)}</td>
+                <td className="px-4 py-3 text-[11px] text-[var(--text-muted)]">
                   {incident.reason_codes.length ? incident.reason_codes.join(", ") : "—"}
                 </td>
-                <td className="px-4 py-2 text-right">
-                  <Link href={`/command/incidents/${incident.id}`} className="text-xs text-sky-300 hover:underline">
-                    Review
+                <td className="px-4 py-3 text-right">
+                  <Link href={`/command/incidents/${incident.id}`} className="text-xs font-medium text-[var(--accent-primary)] hover:underline">
+                    Review →
                   </Link>
                 </td>
               </Row>
