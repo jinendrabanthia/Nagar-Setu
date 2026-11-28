@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
+from app.core.config import settings
 from app.core.errors import AuthenticationError, PermissionDenied
 from app.core.permissions import all_permissions_for_roles
 from app.core.security import ACCESS_TOKEN_TYPE, decode_token
@@ -61,12 +63,48 @@ def _raw_token(request: Request) -> str | None:
     return request.cookies.get(ACCESS_COOKIE)
 
 
+def _dev_principal() -> Principal:
+    """Create a development principal with all permissions when auth is disabled."""
+    from app.core.permissions import ALL_PERMISSIONS
+    return Principal(
+        user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+        organization_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+        role="platform_admin",
+        email="dev@roadguard.local",
+        full_name="Development User",
+        department_id=None,
+        permissions=ALL_PERMISSIONS,
+    )
+
+
 def get_request_context(request: Request) -> Iterator[RequestContext]:
     """Authenticate, open a tenant-scoped session and yield it.
 
     The role and permissions always come from the database row, never from the
     request body, query string or token claims.
     """
+    # DEVELOPMENT ONLY: bypass authentication when DISABLE_AUTH=true
+    if settings.disable_auth:
+        session = app_session_factory()()
+        try:
+            session.begin()
+            apply_tenant_context(session, _dev_principal().organization_id)
+            principal = _dev_principal()
+            context = RequestContext(
+                session=session,
+                principal=principal,
+                request_id=getattr(request.state, "request_id", None),
+            )
+            request.state.auth = principal
+            yield context
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+        return
+
     raw = _raw_token(request)
     if not raw:
         raise AuthenticationError("Sign in to continue.")

@@ -94,6 +94,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
       # Supabase: set COMPOSE_DATABASE_*_URL in .env (scripts/supabase_setup.py --write-env
       # does it for you). The default keeps the bundled local PostGIS working.
+      COMPOSE_DATABASE_APP_URL: ${COMPOSE_DATABASE_APP_URL:-postgresql+psycopg://${POSTGRES_APP_USER:-roadguard_app}:${POSTGRES_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-roadguard}}
+      COMPOSE_DATABASE_MIGRATION_URL: ${COMPOSE_DATABASE_MIGRATION_URL:-postgresql+psycopg://${POSTGRES_USER:-roadguard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-roadguard}}
       DATABASE_APP_URL: ${COMPOSE_DATABASE_APP_URL:-postgresql+psycopg://${POSTGRES_APP_USER:-roadguard_app}:${POSTGRES_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-roadguard}}
       DATABASE_MIGRATION_URL: ${COMPOSE_DATABASE_MIGRATION_URL:-postgresql+psycopg://${POSTGRES_USER:-roadguard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-roadguard}}
       DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-prefer}
@@ -116,6 +118,7 @@ services:
       FRAME_SAMPLE_FPS: ${FRAME_SAMPLE_FPS:-5}
       DETECTOR_BACKEND: ${DETECTOR_BACKEND:-synthetic_scene}
       LIVE_CCTV_ENABLED: ${LIVE_CCTV_ENABLED:-false}
+      DISABLE_AUTH: ${DISABLE_AUTH:-false}
     ports:
       - "${API_PORT:-8000}:8000"
     healthcheck:

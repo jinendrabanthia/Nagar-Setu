@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     cookie_domain: str | None = None
     allowed_origins: str = "http://localhost:3000"
     login_rate_limit_per_minute: int = 10
+    # DEVELOPMENT ONLY: set true to bypass authentication (never use in production!)
+    disable_auth: bool = False
 
     # --- database ---
     database_app_url: str = ""
